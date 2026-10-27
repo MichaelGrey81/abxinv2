@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventory Health</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f5f7f8; --panel:#ffffff; --ink:#1c2328; --muted:#67737b; --line:#e2e7ea; --soft:#eef2f4;
+  --accent:#00B2BB; --accent-ink:#007f86;
+  --dead:#c4473b; --slow:#e0892c; --aging:#d4b12f; --active:#3e9a68; --corp:#7b8892; --consign:#8b70b1; --other:#a0a7ad;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#12171a; --panel:#1b2226; --ink:#e6ebee; --muted:#93a0a8; --line:#2b353b; --soft:#222a2f; --accent-ink:#4cd2d9; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em}
+header h1 span{color:var(--accent-ink)}
+.hdr-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.hist-status{font-size:12.5px;color:var(--muted);max-width:340px}
+.hist-status b{color:var(--ink);font-weight:600}
+.muted{color:var(--muted)}
+.meta{font-size:12.5px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(.95)}
+main{max-width:1320px;margin:0 auto;padding:20px 24px 48px}
+.drop{border:2px dashed var(--line);border-radius:14px;background:var(--panel);padding:48px 24px;text-align:center;transition:border-color .15s,background .15s;margin-bottom:14px}
+body.dragging .drop{border-color:var(--accent);background:var(--soft)}
+.drop h2{margin:0 0 6px;font-size:20px}
+.drop p{margin:6px auto;max-width:600px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:14px!important}
+.err{color:var(--dead);font-weight:600;min-height:1em}
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-bottom:14px}
+.filters label{display:flex;align-items:center;gap:8px;font-weight:600}
+.filters .spacer{flex:1}
+select,input[type=search],input[type=date]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+select{min-width:220px}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets .btn{padding:6px 10px;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;border-top:3px solid var(--c,var(--accent));transition:opacity .15s}
+.kpi.total{cursor:default;border-top-color:var(--ink)}
+.kpi.off{opacity:.38}
+.kpi .k-label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+.kpi .k-val{font-size:20px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .k-sub,.kpi .k-delta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.kpi .k-delta{margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;min-width:0}
+.card.wide{grid-column:1/-1}
+.card h3{margin:0 0 10px;font-size:14px;font-weight:650}
+.card h3 small{font-weight:400;color:var(--muted);margin-left:6px}
+.chartbox{position:relative;height:300px}
+.trend-wrap{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+.trend-table{max-height:300px;overflow:auto}
+.tablehead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:10px}
+.tablehead h3{margin:0;flex:1}
+.tablehead input{min-width:260px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+td.desc{white-space:normal;min-width:220px;max-width:340px}
+th{font-size:12px;color:var(--muted);font-weight:600;user-select:none;position:sticky;top:0;background:var(--panel)}
+#tbl th{cursor:pointer}
+th.sorted{color:var(--ink)}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:hover td{background:var(--soft)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.tablefoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:8px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw}
+.toast.show{opacity:1}
+@media (max-width:960px){.grid,.trend-wrap{grid-template-columns:1fr}}
+@media (max-width:600px){header.top,main{padding-left:16px;padding-right:16px}select{min-width:0;width:100%}.filters label{width:100%}.tablehead input{min-width:0;width:100%}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Inventory <span>Health</span></h1>
+    <div class="meta muted" id="meta">No inventory file loaded</div>
+  </div>
+  <div class="hdr-actions">
+    <span class="hist-status" id="histStatus">No history file</span>
+    <button class="btn" id="histReconnect" hidden>Reconnect history</button>
+    <button class="btn" id="histOpen">Open history</button>
+    <button class="btn" id="histNew">New history</button>
+    <label class="btn primary">Upload inventory<input type="file" id="file" accept=".csv,.xlsx,.xls" hidden></label>
+    <input type="file" id="histFile" accept=".csv" hidden>
+  </div>
+</header>
+
+<main>
+  <section id="empty" class="drop">
+    <h2>Drop the Item Rollup export here</h2>
+    <p class="muted">CSV or Excel of output A from the classifier query.</p>
+    <p><label class="btn primary">Choose file<input type="file" id="file2" accept=".csv,.xlsx,.xls" hidden></label></p>
+    <p class="hint">Saving from SSMS: turn on Tools → Options → Query Results → SQL Server → Results to Grid → “Include column headers when copying or saving the results.”</p>
+    <p class="hint">For trends, open or create a history file (top right), then click Save snapshot after each upload. The history is a plain CSV you can also open in Excel.</p>
+    <p class="err" id="err"></p>
+  </section>
+
+  <section id="dash" hidden>
+    <div class="filters">
+      <label>Location <select id="loc"></select></label>
+      <div class="presets">
+        <button class="btn" data-preset="all">All statuses</button>
+        <button class="btn" data-preset="problem">Dead + Slow</button>
+        <button class="btn" data-preset="branch">Branches only</button>
+      </div>
+      <span class="spacer"></span>
+      <label>Snapshot date <input type="date" id="snapDate"></label>
+      <button class="btn primary" id="snapSave">Save snapshot</button>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section id="trends" hidden>
+    <div class="card" style="margin-bottom:14px">
+      <h3>Trend <small id="trendSub"></small></h3>
+      <div class="trend-wrap">
+        <div class="chartbox"><canvas id="cTrend"></canvas></div>
+        <div class="trend-table"><table id="trendTbl"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dash2" hidden>
+    <div class="grid">
+      <div class="card wide"><h3>Cost on hand by location <small>selected statuses</small></h3><div class="chartbox" id="locBox"><canvas id="cLoc"></canvas></div></div>
+      <div class="card"><h3>Status mix <small>cost</small></h3><div class="chartbox"><canvas id="cMix"></canvas></div></div>
+      <div class="card"><h3>Top 10 product groups <small>cost</small></h3><div class="chartbox"><canvas id="cGroup"></canvas></div></div>
+      <div class="card"><h3>Top 10 suppliers <small>cost</small></h3><div class="chartbox"><canvas id="cSup"></canvas></div></div>
+    </div>
+
+    <div class="card">
+      <div class="tablehead">
+        <h3>Items</h3>
+        <input type="search" id="search" placeholder="Search item, description, group, supplier">
+        <button class="btn" id="export">Export CSV</button>
+      </div>
+      <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+      <div class="tablefoot"><span class="muted" id="count"></span><button class="btn" id="more">Show 50 more</button></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STATUS = [
+    {key:'DEAD',        label:'Dead',        v:'--dead'},
+    {key:'SLOW',        label:'Slow',        v:'--slow'},
+    {key:'AGING',       label:'Aging',       v:'--aging'},
+    {key:'ACTIVE',      label:'Active',      v:'--active'},
+    {key:'CORP',        label:'Corp',        v:'--corp'},
+    {key:'CONSIGNMENT', label:'Consignment', v:'--consign'}
+  ];
+  // Column order of output A, used when the export has no header row
+  const KNOWN = ['location_id','location_name','loc_type','item_id','description','product_group','abc_class','supplier_id','supplier_name','stockable','qty_remaining','cost_on_hand','most_recent_receipt_date','most_recent_sale_date','most_recent_purchase_date','days_since_recent_receipt','days_since_recent_sale','days_since_recent_purchase','oldest_open_layer_date','max_days_since_received_layer','older_layer_count','qty_in_older_layers','cost_in_older_layers','status_rank','inv_status'];
+  const HIST_COLS = ['snapshot_date','location_id','location_name','loc_type','inv_status','item_count','qty_remaining','cost_on_hand'];
+  const COLS = [
+    {k:'locLabel', h:'Location'},
+    {k:'item',     h:'Item'},
+    {k:'desc',     h:'Description', cls:'desc'},
+    {k:'group',    h:'Product group'},
+    {k:'supplier', h:'Supplier'},
+    {k:'status',   h:'Status', type:'status'},
+    {k:'qty',      h:'Qty',            type:'num'},
+    {k:'cost',     h:'Cost on hand',   type:'money'},
+    {k:'dss',      h:'Days since sale',type:'num'},
+    {k:'oldest',   h:'Oldest layer'}
+  ];
+  const FSA = 'showOpenFilePicker' in window;
+
+  const $ = id => document.getElementById(id);
+  let all = [], statuses = [], charts = {};
+  let history = [], histHandle = null, histName = '', histMode = null;   // histMode: 'fsa' | 'download' | null
+  const state = {loc:'ALL', on:new Set(STATUS.map(s => s.key)), search:'', sortKey:'cost', sortDir:-1, limit:50};
+
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const statusDef = key => STATUS.find(x => x.key === key) || statuses.find(x => x.key === key) || {key, label:key.charAt(0) + key.slice(1).toLowerCase(), v:'--other'};
+  const colorOf = key => css(statusDef(key).v);
+  const money = v => (v < 0 ? '-$' : '$') + Math.abs(Math.round(v || 0)).toLocaleString('en-US');
+  const qtyFmt = v => v == null ? '' : (+v).toLocaleString('en-US', {maximumFractionDigits:2});
+  const pct = (a,b) => b ? (a / b * 100).toFixed(1) + '%' : '0.0%';
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const isoLocal = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  const shortDate = iso => { const [y,m,d] = iso.split('-'); return `${m}/${d}/${y.slice(2)}`; };
+
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+  function txt(v){
+    if (v == null) return '';
+    if (v instanceof Date) return isoLocal(v);
+    const s = String(v).trim();
+    return s.toUpperCase() === 'NULL' ? '' : s;
+  }
+  function num(v){
+    if (v == null) return null;
+    if (typeof v === 'number') return v;
+    const s = String(v).replace(/[$,\s]/g,'');
+    if (s === '' || s.toUpperCase() === 'NULL') return null;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+  const dateTxt = v => { const s = txt(v); return s ? s.slice(0,10) : ''; };
+  function normDate(v){
+    const s = txt(v);
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    const d = new Date(s);
+    return isNaN(d) ? '' : isoLocal(d);
+  }
+  const normLoc = v => txt(v).replace(/\.0+$/,'');
+
+  /* ---------- Inventory file ---------- */
+  function readSheet(file, cb){
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', raw:true, cellDates:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        cb(XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:false}));
+      } catch (ex) { showError('Could not read that file: ' + ex.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  function handleFile(file){
+    if (!file) return;
+    $('err').textContent = '';
+    readSheet(file, rows => load(rows, file.name));
+  }
+  function showError(msg){
+    $('err').textContent = msg;
+    $('empty').hidden = false; $('dash').hidden = true; $('dash2').hidden = true;
+  }
+
+  function load(rows, name){
+    if (!rows.length) return showError('The file is empty.');
+    const first = rows[0].map(c => txt(c).toLowerCase());
+    if (first.includes('snapshot_date')) return showError('That looks like a history file. Use “Open history” for it.');
+    let idx = {}, body;
+    if (first.includes('inv_status') || first.includes('cost_on_hand')) {
+      first.forEach((h,i) => { if (h && !(h in idx)) idx[h] = i; });
+      body = rows.slice(1);
+    } else if (rows[0].length >= KNOWN.length) {
+      KNOWN.forEach((h,i) => idx[h] = i);
+      body = rows;
+    } else {
+      return showError('No header row found and the column count doesn’t match output A. Export with column headers turned on.');
+    }
+    const need = ['location_id','item_id','cost_on_hand','inv_status'];
+    const missing = need.filter(h => !(h in idx));
+    if (missing.length) return showError('Missing column(s): ' + missing.join(', ') + '. Make sure this is output A (Item Rollup).');
+
+    const g = (r,h) => (h in idx) ? r[idx[h]] : null;
+    all = body.map(r => {
+      const loc = normLoc(g(r,'location_id'));
+      const locName = txt(g(r,'location_name'));
+      return {
+        loc, locName,
+        locLabel: locName ? loc + ' · ' + locName : loc,
+        locType: txt(g(r,'loc_type')).toUpperCase(),
+        item: txt(g(r,'item_id')),
+        desc: txt(g(r,'description')),
+        group: txt(g(r,'product_group')) || '(none)',
+        supplier: txt(g(r,'supplier_name')) || '(none)',
+        qty: num(g(r,'qty_remaining')),
+        cost: num(g(r,'cost_on_hand')) || 0,
+        dss: num(g(r,'days_since_recent_sale')),
+        oldest: dateTxt(g(r,'oldest_open_layer_date')),
+        status: txt(g(r,'inv_status')).toUpperCase() || 'UNKNOWN'
+      };
+    }).filter(r => r.item);
+    if (!all.length) return showError('No item rows found in the file.');
+
+    const present = new Set(all.map(r => r.status));
+    statuses = STATUS.filter(s => present.has(s.key));
+    present.forEach(k => { if (!STATUS.some(s => s.key === k)) statuses.push(statusDef(k)); });
+    state.on = new Set(statuses.map(s => s.key));
+    state.loc = 'ALL'; state.search = ''; state.limit = 50; $('search').value = '';
+    $('snapDate').value = isoLocal(new Date());
+
+    const typeOrder = t => t === 'CORP' ? 1 : t === 'CONSIGNMENT' ? 2 : 0;
+    const locs = [...new Map(all.map(r => [r.loc, r])).values()]
+      .sort((a,b) => typeOrder(a.locType) - typeOrder(b.locType) || (+a.loc - +b.loc) || a.loc.localeCompare(b.loc));
+    $('loc').innerHTML = '<option value="ALL">All locations</option>' +
+      locs.map(r => `<option value="${esc(r.loc)}">${esc(r.locLabel)}</option>`).join('');
+
+    $('meta').textContent = `${name} · ${all.length.toLocaleString()} item-location rows · loaded ${new Date().toLocaleString()}`;
+    $('empty').hidden = true; $('dash').hidden = false; $('dash2').hidden = false;
+    render();
+  }
+
+  /* ---------- History file ---------- */
+  function setHistStatus(){
+    const n = new Set(history.map(h => h.date)).size;
+    if (!histMode) { $('histStatus').textContent = 'No history file'; return; }
+    $('histStatus').innerHTML = `History: <b>${esc(histName)}</b> · ${n} snapshot${n === 1 ? '' : 's'}` +
+      (histMode === 'download' ? ' · saving downloads an updated copy' : '');
+  }
+  function parseHistory(text){
+    const wb = XLSX.read(text, {type:'string', raw:true});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:null, blankrows:false});
+    if (!rows.length) return [];
+    const head = rows[0].map(c => txt(c).toLowerCase());
+    if (!head.includes('snapshot_date')) throw new Error('This isn’t a history file (no snapshot_date column).');
+    const i = {}; head.forEach((h,k) => i[h] = k);
+    return rows.slice(1).map(r => ({
+      date: normDate(r[i.snapshot_date]),
+      loc: normLoc(r[i.location_id]),
+      locName: txt(r[i.location_name]),
+      locType: txt(r[i.loc_type]).toUpperCase(),
+      status: txt(r[i.inv_status]).toUpperCase(),
+      items: num(r[i.item_count]) || 0,
+      qty: num(r[i.qty_remaining]) || 0,
+      cost: num(r[i.cost_on_hand]) || 0
+    })).filter(h => h.date && h.status);
+  }
+  function historyCsv(){
+    const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+    const rows = history.slice().sort((a,b) => a.date.localeCompare(b.date) || (+a.loc - +b.loc) || a.status.localeCompare(b.status));
+    return [HIST_COLS.join(',')].concat(rows.map(h =>
+      [h.date, h.loc, h.locName, h.locType, h.status, h.items, +h.qty.toFixed(4), +h.cost.toFixed(2)].map(q).join(','))).join('\r\n') + '\r\n';
+  }
+  async function writeHistory(){
+    const csv = historyCsv();
+    if (histMode === 'fsa' && histHandle) {
+      if (!(await ensurePerm(histHandle))) throw new Error('Permission to write the history file was not granted.');
+      const w = await histHandle.createWritable();
+      await w.write(csv); await w.close();
+    } else {
+      downloadBlob(csv, histName || 'inventory_history.csv');
+    }
+  }
+  async function ensurePerm(h){
+    const opts = {mode:'readwrite'};
+    if ((await h.queryPermission(opts)) === 'granted') return true;
+    return (await h.requestPermission(opts)) === 'granted';
+  }
+  async function attachHandle(h){
+    if (!(await ensurePerm(h))) { toast('Permission not granted for ' + h.name); return; }
+    const text = await (await h.getFile()).text();
+    history = text.trim() ? parseHistory(text) : [];
+    histHandle = h; histName = h.name; histMode = 'fsa';
+    idbSet('hist', h).catch(() => {});
+    $('histReconnect').hidden = true;
+    afterHistoryChange();
+    toast(`Loaded ${new Set(history.map(x => x.date)).size} snapshot(s) from ${h.name}`);
+  }
+  async function openHistory(){
+    try {
+      if (FSA) {
+        const [h] = await window.showOpenFilePicker({types:[{description:'Inventory history (CSV)', accept:{'text/csv':['.csv']}}]});
+        await attachHandle(h);
+      } else {
+        $('histFile').click();
+      }
+    } catch (ex) { if (ex.name !== 'AbortError') toast(ex.message); }
+  }
+  async function newHistory(){
+    try {
+      if (FSA) {
+        const h = await window.showSaveFilePicker({suggestedName:'inventory_history.csv', types:[{description:'Inventory history (CSV)', accept:{'text/csv':['.csv']}}]});
+        histHandle = h; histName = h.name; histMode = 'fsa'; history = [];
+        await writeHistory();
+        idbSet('hist', h).catch(() => {});
+        $('histReconnect').hidden = true;
+      } else {
+        history = []; histName = 'inventory_history.csv'; histMode = 'download';
+      }
+      afterHistoryChange();
+      return true;
+    } catch (ex) { if (ex.name !== 'AbortError') toast(ex.message); return false; }
+  }
+  $('histFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      history = parseHistory(await f.text());
+      histName = f.name; histMode = 'download'; histHandle = null;
+      afterHistoryChange();
+    } catch (ex) { toast(ex.message); }
+  });
+
+  async function saveSnapshot(){
+    if (!all.length) return;
+    if (!histMode && !(await newHistory())) return;
+    const date = $('snapDate').value || isoLocal(new Date());
+    if (history.some(h => h.date === date) && !confirm(`A snapshot for ${shortDate(date)} already exists. Replace it?`)) return;
+    const agg = new Map();
+    all.forEach(r => {
+      const k = r.loc + '|' + r.status;
+      const a = agg.get(k) || {date, loc:r.loc, locName:r.locName, locType:r.locType, status:r.status, items:0, qty:0, cost:0};
+      a.items += 1; a.qty += r.qty || 0; a.cost += r.cost;
+      agg.set(k, a);
+    });
+    const before = history;
+    history = history.filter(h => h.date !== date).concat([...agg.values()]);
+    try {
+      await writeHistory();
+      afterHistoryChange();
+      toast(histMode === 'fsa' ? `Snapshot for ${shortDate(date)} saved to ${histName}` : `Snapshot added. Replace your old ${histName} with the downloaded copy.`);
+    } catch (ex) { history = before; toast(ex.message); }
+  }
+
+  function afterHistoryChange(){
+    setHistStatus();
+    if (all.length) render(); else renderTrends();
+  }
+
+  /* IndexedDB: remember the history file handle between sessions (Chrome/Edge) */
+  function idb(){ return new Promise((res, rej) => { const r = indexedDB.open('inv-health', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+  async function idbSet(k, v){ const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
+  async function idbGet(k){ const db = await idb(); return new Promise((res, rej) => { const r = db.transaction('kv').objectStore('kv').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+
+  /* ---------- Aggregation ---------- */
+  function sumBy(rows, keyFn){
+    const m = new Map();
+    rows.forEach(r => { const k = keyFn(r); m.set(k, (m.get(k) || 0) + r.cost); });
+    return m;
+  }
+  const topN = (rows, keyFn, n) => [...sumBy(rows, keyFn).entries()].sort((a,b) => b[1] - a[1]).slice(0, n);
+  const histForLoc = () => state.loc === 'ALL' ? history : history.filter(h => h.loc === state.loc);
+  function prevSnapshot(){
+    const cur = $('snapDate').value || isoLocal(new Date());
+    const dates = [...new Set(history.map(h => h.date))].filter(d => d < cur).sort();
+    if (!dates.length) return null;
+    const d = dates[dates.length - 1];
+    return {date:d, by:sumBy(histForLoc().filter(h => h.date === d), h => h.status)};
+  }
+
+  /* ---------- Render ---------- */
+  function render(){
+    const base = state.loc === 'ALL' ? all : all.filter(r => r.loc === state.loc);
+    const filtered = base.filter(r => state.on.has(r.status));
+    renderKpis(base);
+    renderTrends();
+    renderCharts(filtered);
+    renderTable(filtered);
+    document.querySelectorAll('.presets .btn').forEach(b => b.classList.remove('primary'));
+  }
+
+  function deltaHtml(cur, prev){
+    if (!prev) return '';
+    const d = cur - prev.val;
+    const arrow = d > 0 ? '▲' : d < 0 ? '▼' : '–';
+    return `<div class="k-delta">${arrow} ${money(Math.abs(d))} vs ${shortDate(prev.date)}</div>`;
+  }
+  function renderKpis(base){
+    const total = base.reduce((a,r) => a + r.cost, 0);
+    const by = sumBy(base, r => r.status);
+    const cnt = new Map(); base.forEach(r => cnt.set(r.status, (cnt.get(r.status) || 0) + 1));
+    const prev = prevSnapshot();
+    const prevTotal = prev ? [...prev.by.values()].reduce((a,b) => a + b, 0) : 0;
+    let html = `<div class="kpi total"><div class="k-label">Total cost on hand</div><div class="k-val">${money(total)}</div>
+      <div class="k-sub">${base.length.toLocaleString()} item-locations</div>${deltaHtml(total, prev && {val:prevTotal, date:prev.date})}</div>`;
+    statuses.forEach(s => {
+      const v = by.get(s.key) || 0;
+      html += `<button class="kpi ${state.on.has(s.key) ? '' : 'off'}" data-status="${esc(s.key)}" style="--c:var(${s.v})" title="Click to include/exclude">
+        <div class="k-label">${esc(s.label)}</div><div class="k-val">${money(v)}</div>
+        <div class="k-sub">${pct(v,total)} · ${(cnt.get(s.key) || 0).toLocaleString()} items</div>
+        ${deltaHtml(v, prev && {val:prev.by.get(s.key) || 0, date:prev.date})}</button>`;
+    });
+    $('kpis').innerHTML = html;
+    $('kpis').querySelectorAll('[data-status]').forEach(b => b.onclick = () => {
+      const k = b.dataset.status;
+      state.on.has(k) ? state.on.delete(k) : state.on.add(k);
+      state.limit = 50; render();
+    });
+  }
+
+  function chartBase(){
+    Chart.defaults.color = css('--muted');
+    Chart.defaults.borderColor = css('--line');
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  }
+  function make(id, cfg){
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), cfg);
+  }
+  const moneyTick = v => {
+    const a = Math.abs(v);
+    return a >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M' : a >= 1e3 ? '$' + Math.round(v/1e3) + 'K' : '$' + v;
+  };
+  const tipMoney = ctx => ` ${ctx.dataset.label ? ctx.dataset.label + ': ' : ''}${money(ctx.raw)}`;
+
+  function renderTrends(){
+    if (!history.length) { $('trends').hidden = true; return; }
+    $('trends').hidden = false;
+    chartBase();
+    const rows = histForLoc();
+    const dates = [...new Set(history.map(h => h.date))].sort();
+    const present = [...new Set(history.map(h => h.status))];
+    const keys = STATUS.map(s => s.key).filter(k => present.includes(k)).concat(present.filter(k => !STATUS.some(s => s.key === k)));
+    const on = keys.filter(k => !all.length || state.on.has(k));
+    const cell = new Map(); rows.forEach(h => { const k = h.date + '|' + h.status; cell.set(k, (cell.get(k) || 0) + h.cost); });
+    const val = (d,k) => cell.get(d + '|' + k) || 0;
+    const totals = dates.map(d => on.reduce((a,k) => a + val(d,k), 0));
+
+    const locLabel = state.loc === 'ALL' ? 'all locations' : ($('loc').selectedOptions[0] || {}).text || state.loc;
+    $('trendSub').textContent = `${locLabel} · ${dates.length} snapshot${dates.length === 1 ? '' : 's'}`;
+
+    const datasets = on.map(k => ({label:statusDef(k).label, data:dates.map(d => val(d,k)), borderColor:colorOf(k), backgroundColor:colorOf(k), borderWidth:2, pointRadius:3, tension:.2}));
+    if (on.length > 1) datasets.push({label:'Total (shown)', data:totals, borderColor:css('--ink'), backgroundColor:css('--ink'), borderWidth:1.5, borderDash:[5,4], pointRadius:2, tension:.2});
+    make('cTrend', {
+      type:'line',
+      data:{labels:dates.map(shortDate), datasets},
+      options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+        scales:{y:{ticks:{callback:moneyTick}, beginAtZero:true}, x:{grid:{display:false}}},
+        plugins:{legend:{position:'top', align:'start', labels:{boxWidth:10, boxHeight:10}}, tooltip:{callbacks:{label:tipMoney}}}}
+    });
+
+    const recent = dates.slice().reverse().slice(0, 12);
+    $('trendTbl').querySelector('thead').innerHTML = '<tr><th>Date</th>' + on.map(k => `<th class="num">${esc(statusDef(k).label)}</th>`).join('') + '<th class="num">Total</th><th class="num">Change</th></tr>';
+    $('trendTbl').querySelector('tbody').innerHTML = recent.map(d => {
+      const i = dates.indexOf(d), t = totals[i], p = i > 0 ? totals[i - 1] : null;
+      const ch = p == null ? '' : (t - p > 0 ? '▲ ' : t - p < 0 ? '▼ ' : '') + money(Math.abs(t - p));
+      return `<tr><td>${shortDate(d)}</td>${on.map(k => `<td class="num">${money(val(d,k))}</td>`).join('')}<td class="num"><b>${money(t)}</b></td><td class="num muted">${ch}</td></tr>`;
+    }).join('');
+  }
+
+  function renderCharts(rows){
+    chartBase();
+    const active = statuses.filter(s => state.on.has(s.key));
+
+    const locTotals = [...sumBy(rows, r => r.locLabel).entries()].sort((a,b) => b[1] - a[1]);
+    const labels = locTotals.map(x => x[0]);
+    $('locBox').style.height = Math.max(240, labels.length * 26 + 70) + 'px';
+    const cell = new Map(); rows.forEach(r => { const k = r.locLabel + '|' + r.status; cell.set(k, (cell.get(k) || 0) + r.cost); });
+    make('cLoc', {
+      type:'bar',
+      data:{labels, datasets: active.map(s => ({label:s.label, data:labels.map(l => cell.get(l + '|' + s.key) || 0), backgroundColor:colorOf(s.key), borderWidth:0, barThickness:16}))},
+      options:{indexAxis:'y', maintainAspectRatio:false, animation:false,
+        scales:{x:{stacked:true, ticks:{callback:moneyTick}}, y:{stacked:true, grid:{display:false}}},
+        plugins:{legend:{position:'top', align:'start', labels:{boxWidth:10, boxHeight:10}}, tooltip:{callbacks:{label:tipMoney}}}}
+    });
+
+    const mix = sumBy(rows, r => r.status);
+    make('cMix', {
+      type:'doughnut',
+      data:{labels:active.map(s => s.label), datasets:[{data:active.map(s => mix.get(s.key) || 0), backgroundColor:active.map(s => colorOf(s.key)), borderColor:css('--panel'), borderWidth:2}]},
+      options:{maintainAspectRatio:false, animation:false, cutout:'62%',
+        plugins:{legend:{position:'bottom', labels:{boxWidth:10, boxHeight:10}},
+          tooltip:{callbacks:{label:ctx => { const t = ctx.dataset.data.reduce((a,b) => a + b, 0); return ` ${ctx.label}: ${money(ctx.raw)} (${pct(ctx.raw,t)})`; }}}}}
+    });
+
+    const bar = (id, pairs) => make(id, {
+      type:'bar',
+      data:{labels:pairs.map(p => p[0].length > 28 ? p[0].slice(0,27) + '…' : p[0]),
+            datasets:[{data:pairs.map(p => p[1]), backgroundColor:css('--accent'), borderWidth:0, barThickness:14}]},
+      options:{indexAxis:'y', maintainAspectRatio:false, animation:false,
+        scales:{x:{ticks:{callback:moneyTick}}, y:{grid:{display:false}}},
+        plugins:{legend:{display:false}, tooltip:{callbacks:{title:items => pairs[items[0].dataIndex][0], label:ctx => ' ' + money(ctx.raw)}}}}
+    });
+    bar('cGroup', topN(rows, r => r.group, 10));
+    bar('cSup',   topN(rows, r => r.supplier, 10));
+  }
+
+  function tableRows(rows){
+    const q = state.search.trim().toLowerCase();
+    let out = q ? rows.filter(r => (r.item + ' ' + r.desc + ' ' + r.group + ' ' + r.supplier + ' ' + r.locLabel).toLowerCase().includes(q)) : rows.slice();
+    const k = state.sortKey, d = state.sortDir;
+    out.sort((a,b) => {
+      const x = a[k], y = b[k];
+      if (x == null && y == null) return 0;
+      if (x == null || x === '') return 1;
+      if (y == null || y === '') return -1;
+      return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y))) * d;
+    });
+    return out;
+  }
+
+  function renderTable(rows){
+    const out = tableRows(rows);
+    $('tbl').querySelector('thead').innerHTML = '<tr>' + COLS.map(c =>
+      `<th data-k="${c.k}" class="${c.type === 'num' || c.type === 'money' ? 'num' : ''} ${state.sortKey === c.k ? 'sorted' : ''}">${c.h}${state.sortKey === c.k ? (state.sortDir < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('') + '</tr>';
+    $('tbl').querySelectorAll('th').forEach(th => th.onclick = () => {
+      const k = th.dataset.k;
+      if (state.sortKey === k) state.sortDir *= -1;
+      else { state.sortKey = k; state.sortDir = (k === 'cost' || k === 'qty' || k === 'dss') ? -1 : 1; }
+      renderTable(rows);
+    });
+    $('tbl').querySelector('tbody').innerHTML = out.slice(0, state.limit).map(r => '<tr>' + COLS.map(c => {
+      const v = r[c.k];
+      if (c.type === 'money')  return `<td class="num">${money(v)}</td>`;
+      if (c.type === 'num')    return `<td class="num">${qtyFmt(v)}</td>`;
+      if (c.type === 'status') return `<td><span class="pill" style="--c:${colorOf(v)}"><i></i>${esc(statusDef(v).label)}</span></td>`;
+      return `<td class="${c.cls || ''}">${esc(v)}</td>`;
+    }).join('') + '</tr>').join('');
+    const shown = Math.min(state.limit, out.length);
+    const cost = out.reduce((a,r) => a + r.cost, 0);
+    $('count').textContent = `Showing ${shown.toLocaleString()} of ${out.length.toLocaleString()} rows · ${money(cost)} cost on hand`;
+    $('more').hidden = shown >= out.length;
+    $('more').onclick = () => { state.limit += 50; renderTable(rows); };
+    $('export').onclick = () => exportCsv(out);
+  }
+
+  function downloadBlob(text, name){
+    const blob = new Blob([text], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function exportCsv(rows){
+    const head = ['location_id','location_name','item_id','description','product_group','supplier_name','inv_status','qty_remaining','cost_on_hand','days_since_recent_sale','oldest_open_layer_date'];
+    const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+    const lines = [head.join(',')].concat(rows.map(r => [r.loc, r.locName, r.item, r.desc, r.group, r.supplier, r.status, r.qty, r.cost, r.dss, r.oldest].map(q).join(',')));
+    downloadBlob(lines.join('\r\n'), 'inventory_filtered_' + isoLocal(new Date()) + '.csv');
+  }
+
+  /* ---------- Events ---------- */
+  ['file','file2'].forEach(id => $(id).addEventListener('change', e => { handleFile(e.target.files[0]); e.target.value = ''; }));
+  $('loc').addEventListener('change', e => { state.loc = e.target.value; state.limit = 50; render(); });
+  $('snapDate').addEventListener('change', () => { if (all.length) renderKpis(state.loc === 'ALL' ? all : all.filter(r => r.loc === state.loc)); });
+  $('snapSave').addEventListener('click', saveSnapshot);
+  $('histOpen').addEventListener('click', openHistory);
+  $('histNew').addEventListener('click', newHistory);
+  let t; $('search').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { state.search = e.target.value; state.limit = 50; render(); }, 150); });
+  document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+    const p = b.dataset.preset, keys = statuses.map(s => s.key);
+    state.on = new Set(p === 'all' ? keys
+      : p === 'problem' ? keys.filter(k => k === 'DEAD' || k === 'SLOW')
+      : keys.filter(k => k !== 'CORP' && k !== 'CONSIGNMENT'));
+    state.limit = 50; render(); b.classList.add('primary');
+  }));
+  ['dragenter','dragover'].forEach(ev => window.addEventListener(ev, e => { e.preventDefault(); document.body.classList.add('dragging'); }));
+  ['dragleave','drop'].forEach(ev => window.addEventListener(ev, e => { e.preventDefault(); if (ev === 'drop' || e.relatedTarget === null) document.body.classList.remove('dragging'); }));
+  window.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleFile(f); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (all.length) render(); else renderTrends(); });
+
+  // Offer to reconnect last history file (Chrome/Edge remember the handle; permission needs one click)
+  if (FSA) {
+    idbGet('hist').then(h => {
+      if (!h) return;
+      $('histReconnect').textContent = 'Reconnect ' + h.name;
+      $('histReconnect').hidden = false;
+      $('histReconnect').onclick = () => attachHandle(h).catch(ex => toast(ex.message));
+    }).catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# local settings and data - never commit
+config.ini
+config_ieg.ini
+data/
+data_ieg/
+__pycache__/
+*.pyc
