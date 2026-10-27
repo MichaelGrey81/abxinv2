@@ -751,8 +751,8 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
       <div class="opps stats" id="brStats"></div>
       <div class="grid">
         <div class="card"><h3>Branch score</h3><p class="sub">Line fill 30, stockout rate 30, dead + slow share 20, turns 20. Each scored 0–100 between “needs work” and target. Click a branch for the detail.</p><div class="chartbox" id="brBox" style="height:300px"><canvas id="cBR"></canvas></div></div>
-        <div class="card"><h3>Who does the purchasing</h3><p class="sub">Branch PO lines in the last 180 days by who wrote them: the corporate team (config corp_buyers) or branch staff. Most corporate first. Click a branch for its writers.</p><div class="chartbox" id="brMixBox" style="height:300px"><canvas id="cBRmix"></canvas></div></div>
-        <div class="card wide"><h3>Performance vs corporate purchasing</h3><p class="sub">Each bubble is a branch: how much of its buying the corporate team does (across) against its score (up). Bigger bubbles sell more. Click a bubble for the detail.</p><div class="chartbox" style="height:360px"><canvas id="cBRscatter"></canvas></div></div>
+        <div class="card"><div class="tablehead"><h3>Who does the purchasing</h3><span class="sp"></span><span class="seg" id="brMixBy"><button data-v="val" class="on">Dollars</button><button data-v="lines">Lines</button></span></div><p class="sub">Branch POs in the last 180 days by who wrote them: the corporate team (config corp_buyers) or branch staff, ranked by the corporate share of what's shown. Hover for both dollars and lines. Click a branch for its writers.</p><div class="chartbox" id="brMixBox" style="height:300px"><canvas id="cBRmix"></canvas></div></div>
+        <div class="card wide"><h3>Performance vs corporate purchasing</h3><p class="sub">Each bubble is a branch: the corporate team’s share of its PO dollars (across) against its score (up). Bigger bubbles sell more. Click a bubble for the detail.</p><div class="chartbox" style="height:360px"><canvas id="cBRscatter"></canvas></div></div>
       </div>
       <div class="card">
         <div class="tablehead"><h3>Branch performance</h3><span class="sp"></span><button class="btn sm" id="xBR">Export CSV</button></div>
@@ -4592,56 +4592,59 @@ function renderBranches(v){
   const tot = k => sum(list, a => a[k] || 0);
   const corpL = tot('corpLines'), allL = tot('poLines'), corpV = tot('corpVal'), allV = tot('poVal');
   // do branches that lean on the corporate team do better? (a comparison, not a cause)
-  const hi = graded.filter(a => a.corpShare != null && a.corpShare >= 0.5), lo = graded.filter(a => a.corpShare != null && a.corpShare < 0.5);
+  const hi = graded.filter(a => a.corpValShare != null && a.corpValShare >= 0.5), lo = graded.filter(a => a.corpValShare != null && a.corpValShare < 0.5);
   const avg = l => l.length ? sum(l, a => a.score) / l.length : null;
-  const pts = graded.filter(a => a.corpShare != null), n = pts.length;
-  const r = n >= 4 ? (() => { const mx = sum(pts, a => a.corpShare) / n, my = sum(pts, a => a.score) / n;
-    const cov = sum(pts, a => (a.corpShare - mx) * (a.score - my)), sx = Math.sqrt(sum(pts, a => (a.corpShare - mx) ** 2)), sy = Math.sqrt(sum(pts, a => (a.score - my) ** 2));
+  const pts = graded.filter(a => a.corpValShare != null), n = pts.length;
+  const r = n >= 4 ? (() => { const mx = sum(pts, a => a.corpValShare) / n, my = sum(pts, a => a.score) / n;
+    const cov = sum(pts, a => (a.corpValShare - mx) * (a.score - my)), sx = Math.sqrt(sum(pts, a => (a.corpValShare - mx) ** 2)), sy = Math.sqrt(sum(pts, a => (a.score - my) ** 2));
     return sx && sy ? cov / (sx * sy) : null; })() : null;
   const rTxt = r == null ? '' : Math.abs(r) < 0.2 ? 'little to no relationship' : `${Math.abs(r) < 0.5 ? 'a modest' : 'a fairly strong'} ${r > 0 ? 'positive' : 'negative'} relationship`;
   const best = graded[0], worst = graded[graded.length - 1];
   story('st_branches', [graded.length
-    ? `Across ${B(nf(graded.length))} branches, the corporate purchasing team wrote ${B(pct(corpL, allL))} of branch PO lines (${pct(corpV, allV)} of PO value) in the last 180 days; branch staff wrote the rest${tot('otherLines') ? ' (a few POs have no requester)' : ''}.`
+    ? `Across ${B(nf(graded.length))} branches, the corporate purchasing team bought ${B(pct(corpV, allV))} of branch PO dollars (${pct(corpL, allL)} of PO lines) in the last 180 days; branch staff wrote the rest${tot('otherLines') ? ' (a few POs have no requester)' : ''}.`
     : 'No branch data for this view.',
     best && worst ? `Best run: ${B(best.name)} (${best.grade.g}, ${Math.round(best.score)}). Most room to improve: ${B(worst.name)} (${worst.grade.g}, ${Math.round(worst.score)})${worst.drag ? `, mostly ${bscLc(worst.drag.label)} at ${worst.drag.show(worst.drag.v)}` : ''}.` : '',
-    hi.length && lo.length ? `Branches where the corporate team writes most of the lines average ${B(nf(avg(hi)))} vs ${B(nf(avg(lo)))} for branches that mostly buy for themselves${rTxt ? `; across all branches there's ${rTxt} between corporate share and score` : ''}. Branch size, mix and staffing differ, so read this as a pointer, not proof.` : '']);
+    hi.length && lo.length ? `Branches where the corporate team buys most of the dollars average ${B(nf(avg(hi)))} vs ${B(nf(avg(lo)))} for branches that mostly buy for themselves${rTxt ? `; across all branches there's ${rTxt} between corporate dollar share and score` : ''}. Branch size, mix and staffing differ, so read this as a pointer, not proof.` : '']);
   $('brStats').innerHTML =
     stat('Branch PO lines, 180 days', nf(allL), `${compact(allV)} · ${nf(tot('corpPos') + tot('brPos'))} POs`) +
-    stat('Written by the corporate team', pct(corpL, allL), `${nf(corpL)} lines · ${pct(corpV, allV)} of value`) +
-    stat('Written by branch staff', pct(tot('brLines'), allL), `${nf(tot('brLines'))} lines · ${nf(sum(list, a => a.nBranchWriters))} people`) +
+    stat('Bought by the corporate team', pct(corpV, allV), `${compact(corpV)} of PO dollars · ${pct(corpL, allL)} of lines (${nf(corpL)})`) +
+    stat('Bought by branch staff', pct(tot('brVal'), allV), `${compact(tot('brVal'))} · ${pct(tot('brLines'), allL)} of lines · ${nf(sum(list, a => a.nBranchWriters))} people`) +
     stat('Branch line fill', pctTxt0(tot('filled') / Math.max(1, tot('judged'))), `stockout rate ${pctTxt0(tot('so') / Math.max(1, tot('lines')))}`) +
     stat('Stock on hand bought by corporate', pctTxt0(tot('boughtCorp') / Math.max(1, tot('boughtCorp') + tot('boughtBranch') + tot('boughtOther'))), 'branch stock, by the PO behind each FIFO layer');
   chartDefaults();
   $('brBox').style.height = Math.max(220, graded.length * 28 + 50) + 'px';
   make('cBR', hbarCfg(graded.map(a => a.name), graded.map(a => Math.round(a.score)), graded.map(a => a.grade.c), x => nf(x), 'score, 0–100'));
   DRILL.cBR = i => openBranch(graded[i], list); TFILT.cBR = DRILL.cBR;
-  const mix = list.filter(a => a.poLines).sort((x, y) => (y.corpShare || 0) - (x.corpShare || 0));
+  const by = S.brMixBy || 'val'; segOn('brMixBy', by);
+  const mk = by === 'val' ? 'Val' : 'Lines', shareK = by === 'val' ? 'corpValShare' : 'corpShare';
+  const mix = list.filter(a => a.poLines).sort((x, y) => (y[shareK] || 0) - (x[shareK] || 0));
   $('brMixBox').style.height = Math.max(220, mix.length * 28 + 70) + 'px';
   make('cBRmix', {type:'bar', data:{labels:mix.map(a => a.name), datasets:[
-      {label:'Corporate team', data:mix.map(a => a.corpLines), backgroundColor:css('--accent')},
-      {label:'Branch staff', data:mix.map(a => a.brLines), backgroundColor:CAT[1]},
-      {label:'No requester', data:mix.map(a => a.otherLines), backgroundColor:css('--s-other')}]},
+      {label:'Corporate team', grp:'corp', data:mix.map(a => a['corp' + mk]), backgroundColor:css('--accent')},
+      {label:'Branch staff', grp:'br', data:mix.map(a => a['br' + mk]), backgroundColor:CAT[1]},
+      {label:'No requester', grp:'other', data:mix.map(a => a['other' + mk]), backgroundColor:css('--s-other')}]},
     options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
-      scales:{x:{stacked:true, ticks:{callback:x => nf(x)}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
-      plugins:{legend:{position:'top', align:'start'}, tooltip:{filter:i => i.raw > 0, callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)} lines (${pct(c.raw, mix[c.dataIndex].poLines)})`}}}}});
+      scales:{x:{stacked:true, ticks:{callback:x => by === 'val' ? compact(x) : nf(x)}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{filter:i => i.raw > 0, callbacks:{label:c => { const a = mix[c.dataIndex], g = c.dataset.grp;
+        return ` ${c.dataset.label}: ${compact(a[g + 'Val'])} (${pct(a[g + 'Val'], a.poVal)} of $) · ${nf(a[g + 'Lines'])} lines (${pct(a[g + 'Lines'], a.poLines)})`; }}}}}});
   DRILL.cBRmix = i => openBranch(mix[i], list); TFILT.cBRmix = DRILL.cBRmix;
-  const sc = graded.filter(a => a.corpShare != null), maxS = Math.max(1, ...sc.map(a => a.sales));
-  make('cBRscatter', {type:'bubble', data:{datasets:[{label:'Branches', data:sc.map(a => ({x:a.corpShare * 100, y:a.score, r:6 + 16 * Math.sqrt(a.sales / maxS)})),
+  const sc = graded.filter(a => a.corpValShare != null), maxS = Math.max(1, ...sc.map(a => a.sales));
+  make('cBRscatter', {type:'bubble', data:{datasets:[{label:'Branches', data:sc.map(a => ({x:a.corpValShare * 100, y:a.score, r:6 + 16 * Math.sqrt(a.sales / maxS)})),
       backgroundColor:sc.map(a => hexA(a.grade.c, .55)), borderColor:sc.map(a => a.grade.c), borderWidth:1.5}]},
-    options:{maintainAspectRatio:false, animation:ANIM(), scales:{x:{min:0, max:100, title:{display:true, text:'share of PO lines written by the corporate team'}, ticks:{callback:x => x + '%'}},
+    options:{maintainAspectRatio:false, animation:ANIM(), scales:{x:{min:0, max:100, title:{display:true, text:'share of PO dollars bought by the corporate team'}, ticks:{callback:x => x + '%'}},
       y:{min:0, max:100, title:{display:true, text:'branch score'}}},
-      plugins:{legend:{display:false}, tooltip:{callbacks:{title:i => sc[i[0].dataIndex].name, label:c => { const a = sc[c.dataIndex]; return [` Score ${Math.round(a.score)} (${a.grade.g})`, ` Corporate share ${pctTxt0(a.corpShare)}`, ` Sales ${compact(a.sales)}`]; }}}}}});
+      plugins:{legend:{display:false}, tooltip:{callbacks:{title:i => sc[i[0].dataIndex].name, label:c => { const a = sc[c.dataIndex]; return [` Score ${Math.round(a.score)} (${a.grade.g})`, ` Corporate share ${pctTxt0(a.corpValShare)} of $ · ${pctTxt0(a.corpShare)} of lines`, ` Sales ${compact(a.sales)}`]; }}}}}});
   DRILL.cBRscatter = i => openBranch(sc[i], list); TFILT.cBRscatter = DRILL.cBRscatter;
   table('tBR', [
     {k:'rank', h:'Rank', type:'num'}, {k:'name', h:'Branch'}, {k:'score', h:'Grade', get:r => r.score == null ? null : Math.round(r.score), html:bscGradePill, csv:r => r.score == null ? '' : r.grade.g + ' ' + Math.round(r.score)},
     {k:'dragTxt', h:'Biggest drag', get:r => r.drag ? r.drag.label : '', html:r => r.drag ? `${esc(r.drag.label)} <span class="muted">${r.drag.show(r.drag.v)}</span>` : '<span class="muted">–</span>'},
     {k:'fill', h:'Line fill', type:'pct'}, {k:'soRate', h:'Stockout rate', type:'pct'}, {k:'so', h:'Stockouts', type:'num'}, {k:'dsPct', h:'Dead + slow', type:'pct'}, {k:'turns', h:'Turns', type:'num1'},
     {k:'sales', h:'Sales, 12 mo', type:'money'}, {k:'cost', h:'Cost on hand', type:'money'},
-    {k:'poLines', h:'PO lines', type:'num', title:'Branch PO lines, last 180 days'}, {k:'corpShare', h:'Corporate share', type:'pct', title:'Share of PO lines written by the corporate team'},
-    {k:'corpValShare', h:'Corporate share of $', type:'pct'}, {k:'boughtCorpShare', h:'On hand bought by corporate', type:'pct', title:'Branch stock on hand by who wrote the PO behind it'},
+    {k:'poVal', h:'PO $', type:'money', title:'Branch PO value, last 180 days'}, {k:'corpValShare', h:'Corporate share of $', type:'pct', title:'Share of PO dollars bought by the corporate team'},
+    {k:'poLines', h:'PO lines', type:'num', title:'Branch PO lines, last 180 days'}, {k:'corpShare', h:'Corporate share of lines', type:'pct', title:'Share of PO lines written by the corporate team'}, {k:'boughtCorpShare', h:'On hand bought by corporate', type:'pct', title:'Branch stock on hand by who wrote the PO behind it'},
     {k:'nBranchWriters', h:'Branch writers', type:'num'}, {k:'topTxt', h:'Top branch writer', get:r => r.topBranch ? r.topBranch.name : '', html:r => r.topBranch ? `${esc(r.topBranch.name)} <span class="muted">${nf(r.topBranch.lines)} lines</span>` : '<span class="muted">–</span>'},
     {k:'poOnTime', h:'PO lines on time', type:'pct'}
-  ], list, {sortKey:'rank', sortDir:1, footId:'fBR', exportId:'xBR', exportName:'branch_performance', hidden:['corpValShare', 'poOnTime', 'cost'], onRow:r => openBranch(r, list)});
+  ], list, {sortKey:'rank', sortDir:1, footId:'fBR', exportId:'xBR', exportName:'branch_performance', hidden:['poOnTime', 'cost'], onRow:r => openBranch(r, list)});
 }
 function openBranch(a, list){
   if (!a) return;
@@ -4652,18 +4655,18 @@ function openBranch(a, list){
     notes.push(`Ranks #${a.rank} of ${graded.length} branches with a score of ${Math.round(a.score)}.${strong.length ? ` Strong on ${strong.join(', ')}.` : ''}`);
     weak.forEach(p => notes.push(`${p.label} is ${p.show(p.v)} (target ${p.show(p.good)}, branch median ${p.show(med(p.k))}).`));
   }
-  if (a.poLines) notes.push(`The corporate team wrote ${pctTxt0(a.corpShare)} of this branch's ${nf(a.poLines)} PO lines (branch median ${pctTxt0(med('corpShare'))}); ${nf(a.nBranchWriters)} branch ${a.nBranchWriters === 1 ? 'person wrote' : 'people wrote'} the rest${a.topBranch ? `, most by ${esc(a.topBranch.name)} (${nf(a.topBranch.lines)} lines)` : ''}.`);
+  if (a.poLines) notes.push(`The corporate team bought ${pctTxt0(a.corpValShare)} of this branch's ${compact(a.poVal)} in POs and wrote ${pctTxt0(a.corpShare)} of its ${nf(a.poLines)} lines (branch median ${pctTxt0(med('corpValShare'))} of dollars); ${nf(a.nBranchWriters)} branch ${a.nBranchWriters === 1 ? 'person wrote' : 'people wrote'} the rest${a.topBranch ? `, most by ${esc(a.topBranch.name)} (${nf(a.topBranch.lines)} lines)` : ''}.`);
   if (a.boughtCorpShare != null) notes.push(`${pctTxt0(a.boughtCorpShare)} of the stock on hand was bought by the corporate team.`);
   if (a.so) notes.push(`${nf(a.so)} stockouts in 180 days (${nf(a.soNow)} out now), about ${compact(a.soLost)} in estimated lost sales.`);
-  const ws = a.writers.slice().sort((x, y) => y.lines - x.lines);
+  const ws = a.writers.slice().sort((x, y) => y.value - x.value);
   openDrill({title:a.name, sub:a.score == null ? 'Not enough data to grade' : `Grade ${a.grade.g} · score ${Math.round(a.score)} · #${a.rank} of ${graded.length} branches`,
-    facts:[['Line fill', pctTxt0(a.fill)], ['Stockout rate', pctTxt0(a.soRate)], ['Dead + slow', pctTxt0(a.dsPct)], ['Turns', a.turns == null ? '–' : nf(a.turns, 1) + '×'], ['Corporate share of PO lines', pctTxt0(a.corpShare)], ['Sales, 12 mo', compact(a.sales)]],
+    facts:[['Line fill', pctTxt0(a.fill)], ['Stockout rate', pctTxt0(a.soRate)], ['Dead + slow', pctTxt0(a.dsPct)], ['Turns', a.turns == null ? '–' : nf(a.turns, 1) + '×'], ['Corporate share of PO $', pctTxt0(a.corpValShare)], ['Sales, 12 mo', compact(a.sales)]],
     note:'<h4>What stands out</h4><ul>' + notes.map(x => `<li>${x}</li>`).join('') + '</ul>',
     action:{label:'Filter dashboard to this branch', fn:() => { S.loc = a.loc; fillFilters(); resetPaging(); render(); }},
-    chart:ws.length ? {title:'Who writes this branch’s POs', sub:'PO lines, last 180 days · teal = corporate team, orange = branch staff', cfg:hbarCfg(ws.map(w => w.name), ws.map(w => w.lines), ws.map(w => w.grp === 'corp' ? css('--accent') : w.grp === 'branch' ? CAT[1] : css('--s-other')), x => nf(x)), height:Math.max(160, ws.length * 26 + 50)} : null,
-    table:{title:'PO writers', rows:ws.map(w => ({...w, group:w.grp === 'corp' ? 'Corporate team' : w.grp === 'branch' ? 'Branch' : 'No requester', share:a.poLines ? w.lines / a.poLines : null})), sortKey:'lines', exportName:'branch_writers_' + a.loc,
+    chart:ws.length ? {title:'Who writes this branch’s POs', sub:'PO dollars, last 180 days · teal = corporate team, orange = branch staff · the table has lines too', cfg:hbarCfg(ws.map(w => w.name), ws.map(w => w.value), ws.map(w => w.grp === 'corp' ? css('--accent') : w.grp === 'branch' ? CAT[1] : css('--s-other')), x => compact(x)), height:Math.max(160, ws.length * 26 + 50)} : null,
+    table:{title:'PO writers', rows:ws.map(w => ({...w, group:w.grp === 'corp' ? 'Corporate team' : w.grp === 'branch' ? 'Branch' : 'No requester', share:a.poLines ? w.lines / a.poLines : null, valShare:a.poVal ? w.value / a.poVal : null})), sortKey:'value', exportName:'branch_writers_' + a.loc,
       cols:[{k:'name', h:'Writer'}, {k:'group', h:'Group', filter:'set'}, {k:'pos', h:'POs', type:'num'}, {k:'lines', h:'PO lines', type:'num'}, {k:'share', h:'Share of lines', type:'pct'},
-            {k:'value', h:'PO value', type:'money'}, {k:'stockLines', h:'Stocked-item lines', type:'num'}, {k:'onTime', h:'On time', type:'pct'}]}});
+            {k:'value', h:'PO value', type:'money'}, {k:'valShare', h:'Share of $', type:'pct'}, {k:'stockLines', h:'Stocked-item lines', type:'num'}, {k:'onTime', h:'On time', type:'pct'}]}});
 }
 
 /* ---- Min / max changes ---- */
@@ -5168,6 +5171,7 @@ $('dohTarget').onchange = e => { S.dohTarget = Math.max(1, +e.target.value || 90
 document.querySelectorAll('#chDim button').forEach(b => b.onclick = () => { S.chDim = b.dataset.v; renderTab(); });
 document.querySelectorAll('#soMode button').forEach(b => b.onclick = () => { S.soMode = b.dataset.v; renderTab(); });
 $('bscShare').onclick = () => openBuyerShare();
+document.querySelectorAll('#brMixBy button').forEach(b => b.onclick = () => { S.brMixBy = b.dataset.v; renderTab(); });
 document.querySelectorAll('#bscScope button').forEach(b => b.onclick = () => { S.bscScope = b.dataset.v; resetTable('tBSC'); renderTab(); });
 document.querySelectorAll('#ccType button').forEach(b => b.onclick = () => { S.ccType = b.dataset.v; renderTab(); });
 // light / dark switch: follows the system until picked, then remembered in this browser
