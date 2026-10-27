@@ -8,6 +8,8 @@
    Cost before the first change, after the last change, edit count,
    locations touched, and who made the last change. Moving average cost is
    left out because the system updates it on every receipt.
+   po_median_unit is the item's median PO price per unit over the last year,
+   to compare the new cost with what we have actually been paying.
    ============================================ */
 SET NOCOUNT ON;
 DECLARE @CompanyId INT = 1;
@@ -26,6 +28,17 @@ DECLARE @AuditDays INT = 90;
         OR (at.table_changed = 'inv_loc'            AND at.column_changed = 'standard_cost' AND at.key2_value IN (SELECT CAST(CAST(location_id AS BIGINT) AS VARCHAR(20)) FROM dbo.location WHERE company_id = @CompanyId)))
       AND EXISTS (SELECT 1 FROM dbo.inv_loc il WHERE il.inv_mast_uid = at.inv_mast_uid AND il.company_id = @CompanyId)
 )
+, po12 AS (   -- PO prices for these items over the last year, per single unit
+    SELECT DISTINCT pl.inv_mast_uid,
+           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY pl.unit_price / NULLIF(pl.pricing_unit_size, 0)) OVER (PARTITION BY pl.inv_mast_uid) AS po_median_unit,
+           COUNT(*) OVER (PARTITION BY pl.inv_mast_uid) AS po_lines_12m
+    FROM dbo.po_line pl
+    JOIN dbo.po_hdr ph ON ph.po_no = pl.po_no
+    WHERE ph.company_no = @CompanyId AND ph.order_date >= DATEADD(YEAR, -1, GETDATE())
+      AND ph.delete_flag = 'N' AND pl.delete_flag = 'N' AND pl.cancel_flag = 'N'
+      AND pl.qty_ordered > 0 AND pl.unit_price > 0 AND pl.pricing_unit_size > 0
+      AND pl.inv_mast_uid IN (SELECT inv_mast_uid FROM a)
+)
 SELECT
     im.item_id,
     a.column_changed                                            AS cost_type,
@@ -40,7 +53,13 @@ SELECT
     COUNT(*)                                                    AS edits,
     COUNT(DISTINCT a.key2_value)                                AS locations,
     MAX(CASE WHEN rn_last = 1 THEN a.created_by END)            AS changed_by,
-    CAST(MAX(a.date_created) AS DATE)                           AS last_changed
+    MAX(CASE WHEN rn_last = 1 THEN COALESCE(NULLIF(LTRIM(RTRIM(ISNULL(c.first_name, '') + ' ' + ISNULL(c.last_name, ''))), ''), u.name) END) AS changed_by_name,
+    CAST(MAX(a.date_created) AS DATE)                           AS last_changed,
+    CAST(MAX(po12.po_median_unit) AS DECIMAL(19,6))             AS po_median_unit,
+    MAX(po12.po_lines_12m)                                      AS po_lines_12m
 FROM a
 JOIN dbo.inv_mast im ON im.inv_mast_uid = a.inv_mast_uid
+LEFT JOIN dbo.users u    ON u.id = a.created_by
+LEFT JOIN dbo.contacts c ON c.id = u.contact_id
+LEFT JOIN po12 ON po12.inv_mast_uid = a.inv_mast_uid
 GROUP BY im.item_id, a.column_changed;

@@ -5,3 +5,4 @@ data/
 data_ieg/
 __pycache__/
 *.pyc
+data_demo/

@@ -34,8 +34,11 @@ SELECT
     MAX(CASE WHEN column_changed = 'replenishment_method' AND rn_last  = 1 THEN new_value END)             AS method_after,
     COUNT(*)                                                    AS edits,
     MAX(CASE WHEN rn_item = 1 THEN a.created_by END)              AS changed_by,
+    MAX(CASE WHEN rn_item = 1 THEN COALESCE(NULLIF(LTRIM(RTRIM(ISNULL(c.first_name, '') + ' ' + ISNULL(c.last_name, ''))), ''), u.name) END) AS changed_by_name,
     CAST(MAX(a.date_created) AS DATE)                           AS last_changed,
     CAST(MIN(a.date_created) AS DATE)                           AS first_changed
 FROM a
 JOIN dbo.inv_mast im ON im.inv_mast_uid = a.inv_mast_uid
+LEFT JOIN dbo.users u    ON u.id = a.created_by
+LEFT JOIN dbo.contacts c ON c.id = u.contact_id
 GROUP BY im.item_id, a.location_id;

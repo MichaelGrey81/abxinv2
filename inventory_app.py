@@ -44,6 +44,7 @@ HISTORY_CSV = DATA_DIR / "history.csv"
 CONFIG_FILE = ROOT / "config.ini"
 DEMO_MARKER = DATA_DIR / "DEMO_DATA"
 VENDOR_TERMS = DATA_DIR / "vendor_terms.json"   # rebates and terms typed into the vendor scorecard
+SAMPLE_DIR = ROOT / "data_demo"                  # made-up dataset for the hidden sample mode (demo_data.py)
 
 # Per-dashboard settings ([app] and [locations] in the config file). Defaults = the Abatix dashboard.
 APP = {"title": "Inventory Health", "tagline": "Purchasing analytics",
@@ -254,7 +255,8 @@ def prepare_sql(params: dict) -> str:
 
 
 MODULE_DIR = ROOT / "sql" / "modules"
-MODULE_PARAMS = {"company_id": "CompanyId", "slow_days": "SlowDays", "change_days": "ChangeDays", "require_max": "RequireMax"}
+MODULE_PARAMS = {"company_id": "CompanyId", "slow_days": "SlowDays", "dead_days": "DeadDays", "aging_days": "AgingDays",
+                 "change_days": "ChangeDays", "require_max": "RequireMax"}
 MODULE_ONLY = {"change_days", "require_max"}
 
 
@@ -456,15 +458,15 @@ TERM_FIELDS = {   # field: (kind, limit)
 }
 
 
-def read_vendor_terms() -> dict:
+def read_vendor_terms(path: Path | None = None) -> dict:
     try:
-        data = json.loads(VENDOR_TERMS.read_text(encoding="utf-8"))
+        data = json.loads((path or VENDOR_TERMS).read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
         return {}
 
 
-def save_vendor_terms(supplier_id: str, raw: dict, user: str = "") -> dict:
+def save_vendor_terms(supplier_id: str, raw: dict, user: str = "", path: Path | None = None) -> dict:
     """Validate and store one supplier's terms. Empty values are dropped; an empty set removes the supplier."""
     sid = str(supplier_id).strip()
     if not sid or len(sid) > 40:
@@ -481,7 +483,8 @@ def save_vendor_terms(supplier_id: str, raw: dict, user: str = "") -> dict:
             clean[key] = round(v, 4)
         else:
             clean[key] = str(v).strip()[: int(limit)]
-    terms = read_vendor_terms()
+    path = path or VENDOR_TERMS
+    terms = read_vendor_terms(path)
     if clean:
         clean["supplier_name"] = str(raw.get("supplier_name", ""))[:120]
         clean["updated"] = dt.datetime.now().isoformat(timespec="seconds")
@@ -489,17 +492,18 @@ def save_vendor_terms(supplier_id: str, raw: dict, user: str = "") -> dict:
         terms[sid] = clean
     else:
         terms.pop(sid, None)
-    VENDOR_TERMS.parent.mkdir(parents=True, exist_ok=True)
-    tmp = VENDOR_TERMS.with_suffix(".tmp")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(terms, indent=1), encoding="utf-8")
-    tmp.replace(VENDOR_TERMS)
+    tmp.replace(path)
     return terms
 
 
-def read_history() -> list[dict]:
-    if not HISTORY_CSV.exists():
+def read_history(path: Path | None = None) -> list[dict]:
+    path = path or HISTORY_CSV
+    if not path.exists():
         return []
-    with HISTORY_CSV.open(newline="", encoding="utf-8-sig") as f:
+    with path.open(newline="", encoding="utf-8-sig") as f:
         return [row for row in csv.DictReader(f) if row.get("snapshot_date")]
 
 
@@ -549,9 +553,10 @@ def load_cache() -> dict | None:
     return None
 
 
-def render_static_html(payload: dict) -> str:
+def render_static_html(payload: dict, files: dict | None = None) -> str:
     html = HTML_FILE.read_text(encoding="utf-8")
-    bundle = {"payload": payload, "history": read_history(), "vendor_terms": read_vendor_terms(), "static": True}
+    files = files or {}
+    bundle = {"payload": payload, "history": read_history(files.get("history")), "vendor_terms": read_vendor_terms(files.get("terms")), "static": True}
     data = json.dumps(bundle, separators=(",", ":")).replace("</", "<\\/")
     marker = '<script id="embedded-data" type="application/json">null</script>'
     if marker not in html:
@@ -783,11 +788,69 @@ def friendly_error(ex: Exception) -> str:
     return msg
 
 
+# --------------------------------------------------------------------------- sample mode
+
+def sample_files() -> dict:
+    return {"json": SAMPLE_DIR / "latest.json", "xlsx": SAMPLE_DIR / "latest.xlsx",
+            "history": SAMPLE_DIR / "history.csv", "terms": SAMPLE_DIR / "vendor_terms.json"}
+
+
+_sample_lock = threading.Lock()
+
+
+def ensure_sample(force: bool = False) -> dict:
+    """Build the made-up dataset if it's missing or from an earlier day, so its dates stay current."""
+    f = sample_files()
+    with _sample_lock:
+        stale = force or not f["json"].exists() or dt.date.fromtimestamp(f["json"].stat().st_mtime) != dt.date.today()
+        if stale:
+            import demo_data
+            terms = read_vendor_terms(f["terms"]) if f["terms"].exists() else None
+            demo_data.write(SAMPLE_DIR, workbook="background")
+            if terms is not None:   # keep anything typed into the sample scorecard
+                f["terms"].write_text(json.dumps(terms, indent=1), encoding="utf-8")
+    return f
+
+
+class SampleJob:
+    """Pretend refresh for the sample mode: never touches the database, just rebuilds the made-up data."""
+    STEPS = ["Connecting to {src}", "Running inventory classifier", "Classifier returned 5 result sets",
+             "Running 19 add-on modules (4 at a time)", "Modules finished", "Saved latest.json", "History updated"]
+
+    def __init__(self):
+        self.started = None
+
+    def start(self):
+        if self.started and time.time() - self.started < 18:
+            return False
+        self.started = time.time()
+        return True
+
+    def status(self) -> dict:
+        if not self.started:
+            return {"running": False, "started": None, "finished": None, "error": None, "log": [], "elapsed": None}
+        el = time.time() - self.started
+        n = min(len(self.STEPS), 1 + int(el / 2.6))
+        stamp = lambda i: dt.datetime.fromtimestamp(self.started + i * 2.6).strftime("%H:%M:%S")
+        import demo_data
+        log = [f"[{stamp(i)}] " + self.STEPS[i].format(src=demo_data.SOURCE) for i in range(n)]
+        running = el < 18
+        if not running:
+            ensure_sample(force=dt.date.fromtimestamp(sample_files()["json"].stat().st_mtime) != dt.date.today())
+        return {"running": running, "started": self.started, "finished": None if running else self.started + 18,
+                "error": None, "log": log, "elapsed": round(min(el, 18), 1)}
+
+
 # --------------------------------------------------------------------------- web server
 
 class Handler(BaseHTTPRequestHandler):
     cfg = None
     job: RefreshJob = None
+    sample_job = SampleJob()
+
+    def _sample(self) -> bool:
+        """Sample mode is chosen per request by the page (hidden switch), never stored on the server."""
+        return self.headers.get("X-Data-Mode") == "sample" or "mode=sample" in (urlparse(self.path).query or "")
 
     def log_message(self, fmt, *args):  # keep the console quiet; refresh progress is logged separately
         pass
@@ -810,6 +873,30 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path in ("/", "/index.html"):
                 self._send(HTML_FILE.read_bytes(), "text/html; charset=utf-8")
+            elif path == "/api/data" and self._sample():
+                self._send(ensure_sample()["json"].read_bytes(), "application/json; charset=utf-8")
+            elif path == "/api/vendor_terms" and self._sample():
+                self._json(read_vendor_terms(sample_files()["terms"]))
+            elif path == "/api/history" and self._sample():
+                self._json(read_history(ensure_sample()["history"]))
+            elif path == "/api/status" and self._sample():
+                self._json(self.sample_job.status())
+            elif path == "/api/config" and self._sample():
+                import demo_data
+                self._json({"defaults": default_params(self.cfg), "source": demo_data.SOURCE, "app": APP})
+            elif path == "/api/workbook" and self._sample():
+                f = ensure_sample()
+                if not f["xlsx"].exists():
+                    return self._json({"error": "No workbook yet. Run a refresh first."}, HTTPStatus.NOT_FOUND)
+                self._send(f["xlsx"].read_bytes(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                           extra={"Content-Disposition": f'attachment; filename="inventory_health_{dt.date.today().isoformat()}.xlsx"'})
+            elif path == "/api/history.csv" and self._sample():
+                self._send(ensure_sample()["history"].read_bytes(), "text/csv; charset=utf-8",
+                           extra={"Content-Disposition": 'attachment; filename="inventory_history.csv"'})
+            elif path == "/api/report.html" and self._sample():
+                f = ensure_sample()
+                self._send(render_static_html(json.loads(f["json"].read_text(encoding="utf-8")), f).encode("utf-8"), "text/html; charset=utf-8",
+                           extra={"Content-Disposition": f'attachment; filename="inventory_health_{dt.date.today().isoformat()}.html"'})
             elif path == "/api/data":
                 if CACHE_JSON.exists():
                     self._send(CACHE_JSON.read_bytes(), "application/json; charset=utf-8")
@@ -855,12 +942,20 @@ class Handler(BaseHTTPRequestHandler):
                 if length > 20000:
                     raise ValueError("Too much data")
                 raw = json.loads(self.rfile.read(length) or b"{}")
-                terms = save_vendor_terms(raw.get("supplier_id", ""), raw.get("terms") or {}, os.environ.get("USERNAME", ""))
+                if self._sample():
+                    terms = save_vendor_terms(raw.get("supplier_id", ""), raw.get("terms") or {}, "dwhitfield", sample_files()["terms"])
+                else:
+                    terms = save_vendor_terms(raw.get("supplier_id", ""), raw.get("terms") or {}, os.environ.get("USERNAME", ""))
             except (ValueError, TypeError, json.JSONDecodeError) as ex:
                 return self._json({"error": str(ex)}, HTTPStatus.BAD_REQUEST)
             return self._json(terms)
         if path != "/api/refresh":
             return self._json({"error": "Not found"}, HTTPStatus.NOT_FOUND)
+        if self._sample():
+            self.rfile.read(int(self.headers.get("Content-Length") or 0))
+            if not self.sample_job.start():
+                return self._json({"error": "A refresh is already running."}, HTTPStatus.CONFLICT)
+            return self._json({"started": True})
         try:
             length = int(self.headers.get("Content-Length") or 0)
             raw = json.loads(self.rfile.read(length) or b"{}") if length else {}

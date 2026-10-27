@@ -155,6 +155,22 @@ button.kpi:hover{border-color:#cfd4dc;box-shadow:0 2px 6px rgba(16,24,40,.08)}
 .card h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em}
 .card .sub{font-size:12.5px;color:var(--muted);margin:3px 0 16px}
 .chartbox{position:relative;height:300px}
+.bsc-boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:10px}
+.bsc-board{background:var(--soft);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px}
+.bsc-board h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.bsc-board ol{list-style:none;margin:0;padding:0}
+.bsc-board li{position:relative;display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px;overflow:hidden}
+.bsc-board li:hover{background:var(--hover)}
+.bsc-board li i{position:absolute;left:0;bottom:0;height:2px;background:var(--accent);opacity:.55;border-radius:2px}
+.bsc-board .rk{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--panel);border:1px solid var(--line);color:var(--ink2);flex:none}
+.bsc-board li:first-child .rk{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.bsc-board .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bsc-board b{font-variant-numeric:tabular-nums}
+.section-h{margin:26px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.dr-note{grid-column:1/-1;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 16px;box-shadow:var(--shadow);font-size:13.5px}
+.dr-note h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.dr-note ul{margin:0;padding-left:18px}.dr-note li{margin:3px 0}
+
 .card h3.has-pick{display:flex;align-items:center;gap:10px}
 .ct-pick{margin-left:auto;display:inline-flex;gap:2px;padding:2px;background:var(--soft);border:1px solid var(--line);border-radius:8px;flex:none}
 .ct-pick button{display:grid;place-items:center;width:26px;height:24px;border:0;border-radius:6px;background:none;color:var(--muted);cursor:pointer;padding:0}
@@ -299,6 +315,11 @@ th.sortable:hover .tt-sort.ghost{opacity:.8}
 .story p:last-child{margin:0}
 #soLegend span{cursor:pointer}
 dialog.exec{max-width:860px}
+dialog.bs{max-width:1100px;width:96vw}
+.sc-min{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
+.sc-min select,.sc-min input{font:13px var(--font);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;height:32px}
+.sc-min input{width:130px}
+#bsFrame{width:100%;height:68vh;border:1px solid var(--line);border-radius:10px;background:#eef1f4;margin-top:10px}
 dialog.vd{max-width:1180px;max-height:92vh;overflow:auto}
 .vd-head{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
 .vd-gradebox{display:flex;align-items:center;gap:10px;font-size:13px;white-space:nowrap}
@@ -397,7 +418,7 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
       <div class="nav-label">Purchasing</div>
       <button data-tab="onorder"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 8H6.2'/></svg><span>On order</span><span class="count" id="nOO"></span></button>
       <button data-tab="returns"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M9 14 4 9l5-5'/><path d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/></svg><span>Returns</span><span class="count" id="nRT"></span></button>
-      <button data-tab="buyers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/></svg><span>Buyers</span></button>
+      <button data-tab="buyers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/></svg><span>Buyer scorecard</span></button>
       <button data-tab="minmax"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M4 6h10M4 12h16M4 18h7'/><circle cx='17' cy='6' r='2'/><circle cx='14' cy='18' r='2'/></svg><span>Min/max changes</span><span class="count" id="nMM"></span></button>
       <button data-tab="costs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M12 3v18'/><path d='M17 7.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.7 5 3.5 5 1.6 5 3.5-2.2 3-5 3-5-1.1-5-3'/></svg><span>Cost changes</span><span class="count" id="nCC"></span></button>
       <div class="nav-label">Vendors</div>
@@ -411,6 +432,7 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
       <button data-tab="service"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M12 3a9 9 0 1 0 9 9'/><path d='M12 7v5l3 2'/><path d='M17 3h4v4'/></svg><span>Service</span><span class="count" id="nSV"></span></button>
       <button data-tab="stockouts"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx='12' cy='12' r='9'/><path d='M12 8v4'/><path d='M12 16h.01'/></svg><span>Stockout analysis</span><span class="count" id="nSO"></span></button>
       <button data-tab="fill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>Fill rate</span><span class="count" id="nFR"></span></button>
+      <button data-tab="branches"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l4-3 4 3v11"/><path d="M13 21V6l4-3 4 3v15"/></svg><span>Branch performance</span></button>
       <button data-tab="breakdown"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg><span>Breakdown</span></button>
     </nav>
     <div class="side-foot" id="sideFoot"></div>
@@ -528,6 +550,24 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
     </section>
 
     <section data-panel="buyers" hidden>
+      <div class="card story" id="st_bsc"></div>
+      <div class="opps stats" id="bscStats"></div>
+      <div class="card">
+        <div class="tablehead"><h3>Leaders</h3><span class="seg" id="bscScope"><button data-v="team" class="on">Corporate team</button><button data-v="all">Everyone</button></span><span class="sp"></span></div>
+        <p class="sub">Top five in each, for the group picked here. POs are the last 180 days by PO buyer; stockouts are on the suppliers each person is assigned to; edits are the last 90 days. Click a name for their scorecard.</p>
+        <div class="bsc-boards" id="bscBoards"></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h3>Buyer score</h3><p class="sub">0–100 within the group: stockouts and productivity, half each. Click a buyer for why, and what would take them to an A.</p><div class="chartbox" id="bscBox" style="height:300px"><canvas id="cBSC"></canvas></div></div>
+        <div class="card"><h3>Cost changes against PO history</h3><p class="sub">Last 90 days, by who made the change. Large = moved 50% or more; off PO history = new unit cost 25%+ away from the item’s median PO price over the last year. Click a buyer to see the changes.</p><div class="chartbox" id="bscCostBox" style="height:300px"><canvas id="cBSCcost"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="tablehead"><h3>Buyer scorecard</h3><span class="sp"></span><button class="btn sm" id="bscShare" title="A card for one buyer: their grade, how to reach an A, and where they stand with everyone else's name hidden">Share cards</button><button class="btn sm" id="xBSC">Export CSV</button></div>
+        <p class="note">Graded on two things, half each: stockouts (the stockout rate on their suppliers' items at the branches; 8% earns 0, 1.5% or better full marks) and productivity (branch PO lines written in 180 days against the group median; the median or more earns full marks, scaling down to 0 for no lines). In between, points scale on a straight line. Fill, dead + slow, on-time, cancels and edits are shown for context but don't affect the grade. Grades: A 80+, B 65+, C 50+, D 35+. Click anyone for why they got their grade and what would take them to an A. These are prompts for a conversation, not verdicts: a stockout can be a supplier problem, and a big cost change can be a correct fix. Use Columns for rank columns, PO value, price edits, expedites and lead time.</p>
+        <div class="tablewrap"><table id="tBSC"></table></div>
+        <div class="tablefoot"><span class="muted" id="fBSC"></span><div class="tt-pager"></div></div>
+      </div>
+      <h3 class="section-h">Who bought the stock on hand</h3>
       <div class="card story" id="st_buyers"></div>
       <p class="note" id="buyerNote">Who bought the stock that is still on hand. Each open FIFO layer is traced from its receipt to the PO and the PO's requester. Requesters on the corp purchasing team count as Purchasing Department, other PO requesters as Branch, and stock that didn't come in on a PO receipt as Non-PO/Trace. Status comes from the classifier, so these totals tie to the tiles above.</p>
       <div class="opps" id="deptTiles"></div>
@@ -696,10 +736,29 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
           <h3 style="margin-top:14px">Biggest sales movers</h3><p class="sub">Sales growth, last 12 full months vs the 12 before, vendors with $50K+ in sales in both years. Top 6 up and 6 down. Click for the scorecard.</p><div class="chartbox" style="height:300px"><canvas id="cSCgrowth"></canvas></div></div>
       </div>
       <div class="card">
-        <div class="tablehead"><h3>Vendor scorecard</h3><span class="sp"></span><button class="btn sm" id="xSC">Export CSV</button></div>
+        <div class="tablehead"><h3>Vendor scorecard</h3>
+          <label class="sc-min">Purchases, last 12 months <select id="scMin"><option value="0">Any amount</option><option value="25000">$25K+</option><option value="50000">$50K+</option><option value="100000">$100K+</option><option value="250000">$250K+</option><option value="500000">$500K+</option><option value="1000000">$1M+</option><option value="5000000">$5M+</option><option value="custom">Custom…</option></select>
+          <input id="scMinCustom" type="number" min="0" step="10000" placeholder="$ minimum" hidden></label>
+          <span class="sp"></span><button class="btn sm" id="xSC">Export CSV</button></div>
         <p class="note">One row per vendor. Purchases are PO receipts at cost and sales are invoiced sales on the vendor's items, both company-wide (location filters don't apply to them). Delivery, fill, stockouts and inventory follow the filters. Score: on time in full 20, customer line fill 20, stockout rate 15, dead + slow share 15, turns 15, gross margin 10, return policy 5. Grades: A 85+, B 70+, C 55+, D 40+, F below. Use Columns to show lead time, GMROI, cost changes, payment terms and more. Click a vendor for the full scorecard and to record rebates and terms.</p>
         <div class="tablewrap"><table id="tSC"></table></div>
         <div class="tablefoot"><span class="muted" id="fSC"></span><div class="tt-pager"></div></div>
+      </div>
+    </section>
+    <section data-panel="branches" hidden>
+      <div class="card story" id="st_branches"></div>
+      <div id="brNotice"></div>
+      <div class="opps stats" id="brStats"></div>
+      <div class="grid">
+        <div class="card"><h3>Branch score</h3><p class="sub">Line fill 30, stockout rate 30, dead + slow share 20, turns 20. Each scored 0–100 between “needs work” and target. Click a branch for the detail.</p><div class="chartbox" id="brBox" style="height:300px"><canvas id="cBR"></canvas></div></div>
+        <div class="card"><h3>Who does the purchasing</h3><p class="sub">Branch PO lines in the last 180 days by who wrote them: the corporate team (config corp_buyers) or branch staff. Most corporate first. Click a branch for its writers.</p><div class="chartbox" id="brMixBox" style="height:300px"><canvas id="cBRmix"></canvas></div></div>
+        <div class="card wide"><h3>Performance vs corporate purchasing</h3><p class="sub">Each bubble is a branch: how much of its buying the corporate team does (across) against its score (up). Bigger bubbles sell more. Click a bubble for the detail.</p><div class="chartbox" style="height:360px"><canvas id="cBRscatter"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="tablehead"><h3>Branch performance</h3><span class="sp"></span><button class="btn sm" id="xBR">Export CSV</button></div>
+        <p class="note">Branches only. Line fill and stockouts are for stocked items over 180 days; dead + slow and turns use today's cost on hand and the last 12 months of COGS. Purchasing is branch POs entered in the last 180 days by the PO's requested-by contact; “On hand bought by corporate” traces each open FIFO layer back to its PO. Grades: A 80+, B 65+, C 50+, D 35+. Use Columns for share of PO dollars, PO on-time and cost on hand.</p>
+        <div class="tablewrap"><table id="tBR"></table></div>
+        <div class="tablefoot"><span class="muted" id="fBR"></span><div class="tt-pager"></div></div>
       </div>
     </section>
     <section data-panel="minmax" hidden>
@@ -1075,6 +1134,21 @@ $('bMail').onclick = async () => {
     </div>
   </form>
 </dialog>
+<dialog id="bsDlg" class="exec bs">
+  <form method="dialog">
+    <h2>Share a buyer scorecard</h2>
+    <div class="muted" style="font-size:12.5px">What the buyer will see: their grade, why, what would take them to an A, and where they stand. Everyone else is listed with real numbers but no name, and other names are never written into the file. Download as a page they open in any browser, an image for email or Teams, or every card at once.</div>
+    <label class="exec-scope">Buyer <select id="bsBuyer"></select></label>
+    <iframe id="bsFrame" title="Card preview"></iframe>
+    <div class="dlg-actions" style="flex-wrap:wrap">
+      <button type="button" class="btn" id="bsZip">All cards (.zip)</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn" id="bsPng">Image (.png)</button>
+      <button type="button" class="btn primary" id="bsHtml">Download card (.html)</button>
+      <button class="btn" value="close">Close</button>
+    </div>
+  </form>
+</dialog>
 <dialog id="buyDlg" class="exec">
   <form method="dialog">
     <h2>Buyer stockout review</h2>
@@ -1212,7 +1286,7 @@ function downloadCsv(name, head, rows){
 }
 
 /* ================= state ================= */
-let STATIC = false, P = null, rows = [], history = [], locMeta = new Map(), usageByItem = new Map(), stockByKey = new Map();
+let STATIC = false, P = null, rows = [], history = [], historyRebuilt = [], locMeta = new Map(), usageByItem = new Map(), stockByKey = new Map();
 let statuses = [], usageMonths = 6, workDays = 125, charts = {};
 let buyerRows = [], rowByKey = new Map();
 const DEPTS = ['Purchasing Department', 'Branch', 'Non-PO/Trace'];
@@ -1220,7 +1294,7 @@ const S = {loc:'ALL', type:'ALL', group:'ALL', supplier:'ALL', abc:'ALL', dept:'
            tab:lsGet('tab','overview'), cover:lsGet('cover',3), target:lsGet('target',6), noUsage:false, dim:'supplier', exBasis:'mos'};
 const T = {};   // per-table sort/paging state
 const TABS = ['overview','items','transfers','excess','layers','onorder','returns','suppliers','vendors','buyers','minmax','costs','change','turns','doh','service','stockouts','breakdown'];
-const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Dead stock by buyer', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', minmax:'Min/max changes', costs:'Cost changes'};
+const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Buyer scorecard', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', branches:'Branch performance', minmax:'Min/max changes', costs:'Cost changes'};
 const history_replace = h => { try { window.history.replaceState(null, '', h); } catch {} };
 if (TABS.includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
 if (!TABS.includes(S.tab)) S.tab = 'overview';
@@ -1305,6 +1379,13 @@ function setData(payload, hist){
     date:String(h.snapshot_date).slice(0,10), loc:String(h.location_id).replace(/\.0+$/,''), type:String(h.loc_type || '').toUpperCase(),
     status:String(h.inv_status || '').toUpperCase(), cost:+h.cost_on_hand || 0, items:+h.item_count || 0
   })).filter(h => h.date && h.status);
+  // weeks before the first saved snapshot, rebuilt from transactions (module status_history); trend chart only
+  const firstSaved = history.reduce((a, h) => !a || h.date < a ? h.date : a, null);
+  historyRebuilt = (modRows('status_history') || []).map(h => {
+    const loc = String(h.location_id), type = (locMeta.get(loc) || {type:'CONSIGNMENT'}).type, st = String(h.inv_status || '').toUpperCase();
+    return {date:String(h.snapshot_date).slice(0, 10), loc, type, status:type === 'CORP' || type === 'CONSIGNMENT' ? type : st,
+            cost:+h.cost_on_hand || 0, items:+h.item_count || 0, rebuilt:true};
+  }).filter(h => h.date && (!firstSaved || h.date < firstSaved));
 
   fillFilters();
   const ri = P.run_info || {};
@@ -1462,7 +1543,7 @@ function render(){
 function renderTab(){
   const v = views();
   const _v = v;
-  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
+  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, branches:renderBranches, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
   try { (SUM[S.tab] || (() => {}))(_v); } catch (ex) { console.warn('summary', ex); }
 }
 function setTab(t){
@@ -1948,8 +2029,10 @@ function simpleBars(id, labels, values, colors, extra, xTitle){
 }
 function renderTrend(){
   const card = $('trendCard');
-  const hrows = histFiltered();
-  const dates = [...new Set(history.map(h => h.date))].sort();
+  const all = historyRebuilt.concat(history);
+  const hrows = all.filter(h => sel('loc', h.loc) && (S.type === 'ALL' || h.type === S.type));
+  const dates = [...new Set(all.map(h => h.date))].sort();
+  const rebuiltDates = new Set(historyRebuilt.map(h => h.date)), nRebuilt = dates.filter(d => rebuiltDates.has(d)).length;
   if (!dates.length) {
     card.hidden = false;
     $('trendSub').textContent = 'No snapshots yet. Every refresh saves one, so this chart fills in as you refresh over time.';
@@ -1964,14 +2047,16 @@ function renderTrend(){
   const totals = dates.map(d => on.reduce((a, k) => a + val(d, k), 0));
   const scope = [S.loc === 'ALL' ? 'All locations' : selLabel('loc', locName, 'locations'), S.type === 'ALL' ? '' : TYPE_LABEL[S.type] + ' only'].filter(Boolean).join(' · ');
   const ignored = S.group !== 'ALL' || S.supplier !== 'ALL' || S.abc !== 'ALL' || S.q;
-  $('trendSub').textContent = `${scope} · ${dates.length} snapshot${dates.length === 1 ? '' : 's'}` + (ignored ? ' · snapshots are stored by location and status, so group, supplier, ABC and search filters do not apply here' : '');
+  const nSaved = dates.length - nRebuilt;
+  $('trendSub').textContent = `${scope} · ` + (nRebuilt ? `weekly from ${shortDate(dates[0])} rebuilt from inventory transactions, then ${nSaved} saved snapshot${nSaved === 1 ? '' : 's'}` : `${dates.length} snapshot${dates.length === 1 ? '' : 's'}`) + (ignored ? ' · snapshots are stored by location and status, so group, supplier, ABC and search filters do not apply here' : '');
   const ds = on.map(k => ({label:statusDef(k).label, data:dates.map(d => val(d, k)), borderColor:colorOf(k), backgroundColor:colorOf(k), borderWidth:2, pointRadius:dates.length > 20 ? 0 : 3, pointHoverRadius:5, tension:.2}));
   if (on.length > 1) ds.push({label:'Total shown', data:totals, borderColor:css('--ink'), backgroundColor:css('--ink'), borderWidth:1.5, borderDash:[5,4], pointRadius:0, pointHoverRadius:4, tension:.2});
   make('cTrend', {type:'line', data:{labels:dates.map(shortDate), datasets:ds},
     options:{maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', intersect:false},
       scales:{y:{ticks:{callback:moneyTick}, beginAtZero:true, border:{display:false}}, x:{grid:{display:false}}},
       plugins:{legend:{position:'top', align:'start', labels:{boxWidth:10, boxHeight:10, useBorderRadius:true, borderRadius:2}},
-               tooltip:{callbacks:{label:ctx => ` ${ctx.dataset.label}: ${money(ctx.raw)}`}}}}});
+               tooltip:{callbacks:{title:i => shortDate(dates[i[0].dataIndex]) + (rebuiltDates.has(dates[i[0].dataIndex]) ? ' · rebuilt from transactions' : ' · saved snapshot'),
+                                   label:ctx => ` ${ctx.dataset.label}: ${money(ctx.raw)}`}}}}});
   const recent = dates.slice().reverse().slice(0, 15);
   $('trendTbl').querySelector('thead').innerHTML = '<tr><th>Date</th>' + on.map(k => `<th class="num">${esc(statusDef(k).label)}</th>`).join('') + '<th class="num">Total</th><th class="num">Change</th></tr>';
   $('trendTbl').querySelector('tbody').innerHTML = recent.map(d => {
@@ -1983,7 +2068,7 @@ function renderTrend(){
   DRILL.cTrend = i => { const d = dates[i], hr = hrows.filter(h => h.date === d && on.includes(h.status));
     const list = hr.map(h => ({...h, locLabel:locName(h.loc)}));
     const st = statusStackCfg(list, h => h.locLabel, h => h.cost, h => h.status);
-    openDrill({title:`Snapshot ${shortDate(d)}`, sub:'Saved history, by location and status', facts:[['Cost on hand', compact(sum(list, h => h.cost))], ['Item-locations', nf(sum(list, h => h.items))]],
+    openDrill({title:`Snapshot ${shortDate(d)}`, sub:rebuiltDates.has(d) ? 'Rebuilt from inventory transactions, by location and status' : 'Saved history, by location and status', facts:[['Cost on hand', compact(sum(list, h => h.cost))], ['Item-locations', nf(sum(list, h => h.items))]],
       chart:{filter:{col:'locLabel', keys:st.labels}, title:'Cost on hand by location', sub:'Stacked by status', cfg:st.cfg, height:Math.max(220, st.labels.length * 26 + 70)},
       table:{title:'Snapshot rows', rows:list, sortKey:'cost', exportName:'snapshot_' + d, cols:[{k:'locLabel', h:'Location'}, {k:'status', h:'Status', type:'status', csv:r => r.status}, {k:'items', h:'Item-locations', type:'num'}, {k:'cost', h:'Cost on hand', type:'money'}]}}); };
 }
@@ -3025,7 +3110,8 @@ $('execPdf').onclick = () => {
 // Which suppliers' items keep running out because WE reordered late (not because the supplier shipped late).
 const REORDER_CAUSES = ['none', 'reorder', 'min'];   // not reordered, ran out before PO was due, min below lead-time demand
 function reorderNowRows(){
-  return (modRows('reorder_now') || []).map(x => ({...x, item:String(x.item_id), loc:String(x.location_id), supplier:x.supplier_name || '(none)', buyer:normBuyer(x.primary_buyer),
+  // branches only: corp DCs and consignment locations aren't part of stockout or reorder accountability
+  return (modRows('reorder_now') || []).filter(x => (locMeta.get(String(x.location_id)) || {type:'CONSIGNMENT'}).type === 'BRANCH').map(x => ({...x, item:String(x.item_id), loc:String(x.location_id), supplier:x.supplier_name || '(none)', buyer:normBuyer(x.primary_buyer),
     noPo:+x.no_po === 1, avail:+x.qty_available || 0, min:+x.inv_min || 0, max:x.inv_max == null ? null : +x.inv_max,
     lastSale:x.last_sale_date && x.last_sale_date > '1990-01-01' ? x.last_sale_date : null,
     gapValue:Math.max(0, ((+x.inv_max || +x.inv_min || 0) - (+x.qty_available || 0))) * (+x.unit_cost || 0)}));
@@ -3264,7 +3350,7 @@ const DRILL = {};
 function openDrill(o){
   const d = $('drill');
   $('drTitle').textContent = o.title; $('drSub').textContent = o.sub || '';
-  $('drFacts').innerHTML = (o.facts || []).map(([l, v]) => `<div class="fact"><b>${v}</b><span>${esc(l)}</span></div>`).join('');
+  $('drFacts').innerHTML = (o.facts || []).map(([l, v]) => `<div class="fact"><b>${v}</b><span>${esc(l)}</span></div>`).join('') + (o.note ? `<div class="dr-note">${o.note}</div>` : '');
   const act = $('drAction'); act.hidden = !o.action;
   if (o.action) { act.textContent = o.action.label; act.onclick = () => { closeDrill(true); o.action.fn(); }; }
   d.classList.remove('closing'); d.hidden = false; d.querySelector('.panel').scrollTop = 0;
@@ -4073,10 +4159,19 @@ function renderScorecard(v){
     options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), scales:{x:{ticks:{callback:v => v + '%'}}, y:{grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
       plugins:{legend:{display:false}, tooltip:{callbacks:{title:i => movers[i[0].dataIndex].name, label:c => { const r = movers[c.dataIndex]; return [` ${c.raw > 0 ? '+' : ''}${c.raw.toFixed(1)}% sales`, ` ${money(r.s12)} vs ${money(r.ps12)}`]; }}}}}});
   TFILT.cSCgrowth = i => openVendor(movers[i].id); DRILL.cSCgrowth = TFILT.cSCgrowth;
-  table('tSC', SC_COLS, VD, {sortKey:'p12', footId:'fSC', exportId:'xSC', exportName:'vendor_scorecard', onRow:r => openVendor(r.id),
+  const minP = scMinValue(), VDt = minP > 0 ? VD.filter(r => (r.p12 || 0) >= minP) : VD;
+  table('tSC', SC_COLS, VDt, {sortKey:'p12', footId:'fSC', exportId:'xSC', exportName:minP > 0 ? `vendor_scorecard_${Math.round(minP / 1000)}k_plus` : 'vendor_scorecard', onRow:r => openVendor(r.id),
     hidden:['gradeTxt', 'gmroi', 'doh', 'oneRec', 'firstRec', 'lead', 'restock', 'retWin', 'costChanges', 'costAvg', 'payTerms', 's3Growth', 'pastDue'],
-    summary:s => `${compact(sum(s, r => r.p12))} purchases · ${compact(sum(s, r => r.s12))} sales, last 12 months`});
+    summary:s => `${minP > 0 ? `${nf(VDt.length)} of ${nf(VD.length)} vendors with ${compact(minP)}+ purchases · ` : ''}${compact(sum(s, r => r.p12))} purchases · ${compact(sum(s, r => r.s12))} sales, last 12 months`});
 }
+// table-only filter: vendors with at least this much in PO receipts over the last 12 months
+function scMinValue(){
+  const v = $('scMin').value;
+  if (v !== 'custom') return +v || 0;
+  const c = +$('scMinCustom').value; return isFinite(c) && c > 0 ? c : 0;
+}
+$('scMin').onchange = () => { $('scMinCustom').hidden = $('scMin').value !== 'custom'; if (!$('scMinCustom').hidden) $('scMinCustom').focus(); resetTable('tSC'); renderTab(); };
+$('scMinCustom').oninput = () => { clearTimeout(scMinValue.t); scMinValue.t = setTimeout(() => { resetTable('tSC'); renderTab(); }, 350); };
 SUM.scorecard = v => {
   const d = vendorData(v), sc = d.filter(r => r.score != null), big = [...sc].sort((a, b) => b.p12 - a.p12).slice(0, 20);
   const weak = big.filter(r => r.score < 55).sort((a, b) => b.p12 - a.p12)[0], up = d.filter(r => r.sGrowth != null && r.s12 >= 100000 && r.ps12 >= 50000).sort((a, b) => b.sGrowth - a.sGrowth)[0];
@@ -4141,6 +4236,435 @@ $('vdSave').onclick = async () => {
   catch (ex) { toast('Could not save: ' + ex.message); }
 };
 $('vdFilter').onclick = () => { const r = VCUR; $('vdDlg').close(); S.supplier = r.name; fillFilters(); resetPaging(); render(); };
+
+/* ---- Buyer scorecard: PO activity, stock outcomes and edits per person, graded within the chosen group ---- */
+const bscKey = n => String(n || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
+const bscName = n => String(n || '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+const BIG_CHANGE = 0.5, OFF_PO = 0.25;   // a cost change of 50%+ ; a new cost 25%+ away from the 12-month median PO price
+// one cost change, with how far it moved and how it compares with what we have been paying on POs
+function costCheck(c){
+  const pctChg = c.ub > 0 && c.ua != null ? (c.ua - c.ub) / c.ub : null;
+  const med = c.po_median_unit == null ? null : +c.po_median_unit, nPo = +c.po_lines_12m || 0;
+  const vsPo = med > 0 && c.ua > 0 && nPo >= 2 ? c.ua / med - 1 : null;
+  // a cost set to $0 is usually a deliberate cleanup, so it gets its own bucket instead of counting as a large change
+  const zero = c.ub > 0 && c.ua != null && +c.ua === 0;
+  const big = !zero && pctChg != null && Math.abs(pctChg) >= BIG_CHANGE, off = !zero && vsPo != null && Math.abs(vsPo) >= OFF_PO;
+  const look = big && off;
+  return {...c, pctChg, vsPo, med, nPo, big, off, look, zero, sev:(look ? 3 : off ? 2 : big ? 1 : zero ? 0.5 : 0) + (pctChg == null || zero ? 0 : Math.min(0.49, Math.abs(pctChg) / 20)),
+          flag:zero ? 'Cost set to $0' : look ? 'Large change, off PO history' : big ? 'Large change, matches PO history' : off ? 'Off PO history' : vsPo == null ? 'No recent POs' : 'In line'};
+}
+// Each measure earns 0-100 on a straight line between "needs work" (bad) and "target" (good). The bands are set so
+// solid, typical performance lands in the 70s-80s; grades are A 80+, B 65+, C 50+, D 35+.
+const BSC_PARTS = [
+  {k:'soRate', label:'Stockout rate', w:50, bad:0.08, good:0.015, tip:'Stockouts ÷ customer order lines on their suppliers’ stocked items at the branches, 180 days (8% earns 0, 1.5% or better full marks)',
+   plan:(a, t) => `Bring the stockout rate on your suppliers from ${pctTxt0(a.soRate)} to ${pctTxt0(t)}, about ${nf(Math.max(1, a.so - t * a.orderLines))} fewer stockouts over 180 days. Start with your repeat offenders and the items that ran out before a PO was due: raise mins that don't cover lead-time demand and place POs earlier on long-lead suppliers.`},
+  {k:'prod', label:'Productivity', w:50, bad:0, good:1, show:v => v == null ? '–' : v.toFixed(2) + '× median',
+   tip:'Branch PO lines written in the last 180 days compared with the group median (full marks at the group median or above, scaling down to 0 for no lines)',
+   plan:(a, t) => `Raise your PO line volume from ${nf(a.lines)} to about ${nf(t * a.medLines)} over 180 days, roughly ${nf(Math.max(1, (t * a.medLines - a.lines) / 26))} more lines a week. Taking on more of the team's suppliers or reorder reviews is the usual way there.`}
+].map(p => ({show:v => pctTxt0(v), ...p, f:v => bscLin(v, p.bad, p.good)}));
+const BSC_GRADES = [{g:'A', min:80, c:'#1baf7a'}, {g:'B', min:65, c:'#2a78d6'}, {g:'C', min:50, c:'#eda100'}, {g:'D', min:35, c:'#eb6834'}, {g:'F', min:-1, c:'#a8232d'}];
+const bscLin = (v, bad, good) => v == null || !isFinite(v) ? null : Math.max(0, Math.min(100, (v - bad) / (good - bad) * 100));
+const bscInv = (p, sc) => p.bad + sc / 100 * (p.good - p.bad);   // value that earns a given 0-100 on a measure
+const pctTxt0 = v => v == null ? '–' : (v * 100).toFixed(1) + '%';
+const bscGrade = s => s == null ? null : BSC_GRADES.find(g => s >= g.min);
+// why the grade: what each measure earned, and the measures costing the most points
+function bscWhy(a){
+  const have = a.parts.filter(p => p.sc != null), W = sum(have, p => p.w);
+  if (!have.length || a.score == null) return {lines:['Not enough data to grade yet: the score needs measures worth at least 50 of the 100 points.'], drag:null, plan:[], toA:null};
+  const lost = have.map(p => ({...p, lostPts:(100 - p.sc) * p.w / W})).sort((x, y) => y.lostPts - x.lostPts);
+  const strong = have.filter(p => p.sc >= 80).map(p => `${bscLc(p.label)} (${p.show(p.v)})`);
+  const weak = lost.filter(p => p.lostPts >= 2);
+  const lines = [`Score ${Math.round(a.score)} = the weighted average of ${have.length} measures${have.length < BSC_PARTS.length ? ` (${BSC_PARTS.filter(p => !have.some(h => h.k === p.k)).map(p => bscLc(p.label)).join(', ')} left out for lack of data, the rest re-weighted)` : ''}.`];
+  if (strong.length) lines.push(`Strong on ${strong.join(', ')}.`);
+  if (weak.length) lines.push(`Points lost mostly to ${weak.slice(0, 3).map(p => `${bscLc(p.label)} at ${p.show(p.v)} (target ${p.show(p.good)}, earns ${Math.round(p.sc)} of 100, costs ${nf(p.lostPts, 1)} points)`).join('; ')}.`);
+  // greedy plan: improve the measures losing the most points until the score reaches an A
+  const target = BSC_GRADES[0].min, plan = [];
+  let gap = target - a.score;
+  if (gap > 0) for (const p of lost) {
+    if (gap <= 0.05) break;
+    const gain = Math.min(p.lostPts, gap), newSc = p.sc + gain * W / p.w;
+    plan.push({...p, to:bscInv(p, Math.min(100, newSc + 0.5)), gain});
+    gap -= gain;
+  }
+  return {lines, drag:lost[0] && lost[0].lostPts >= 1 ? lost[0] : null, plan, toA:a.score >= target ? 0 : target - a.score};
+}
+const bscGradePill = r => r.score == null ? '<span class="muted">–</span>' : `<span class="pill" style="--c:${r.grade.c}"><i></i>${r.grade.g} · ${Math.round(r.score)}</span>`;
+
+function buyerScoreData(){
+  const people = new Map();
+  const P_ = k => { let a = people.get(k); if (!a) people.set(k, a = {key:k, name:'', pos:0, lines:0, value:0, canceled:0, judged:0, onTimeN:0, lead:null, suppliers:0, locations:0,
+      priceEdits:0, qtyChanged:0, expedited:0, keyedOther:0, lastPo:null, poDays:0, so:0, soDays:0, soLost:0, soNow:0, orderLines:0, fillJ:0, fillF:0, supLines:0, supOt:0,
+      mm:[], cc:[], dsv:0, branch:0, bought:0}); return a; };
+  const nameOf = (a, n) => { if (n && (!a.name || /^[A-Z ]+$/.test(a.name))) a.name = /[a-z]/.test(n) ? n : bscName(n); };
+  (modRows('buyer_activity') || []).forEach(b => { if (!b.buyer || b.buyer === '(no requester)') return; const a = P_(bscKey(b.buyer)); nameOf(a, b.buyer);
+    Object.assign(a, {pos:+b.pos || 0, lines:+b.po_lines || 0, value:+b.po_value || 0, canceled:+b.lines_canceled || 0, judged:+b.lines_judged || 0, onTimeN:+b.lines_on_time || 0,
+      lead:b.avg_lead_days == null ? null : +b.avg_lead_days, suppliers:+b.suppliers || 0, locations:+b.locations || 0, priceEdits:+b.price_overrides || 0,
+      qtyChanged:+b.qty_changed_lines || 0, expedited:+b.expedited_lines || 0, keyedOther:+b.keyed_by_other || 0, lastPo:b.last_po_date, poDays:+b.days_with_pos || 0}); });
+  // stock outcomes on the suppliers they are assigned to
+  const ev = stockoutView().filter(e => (locMeta.get(e.loc) || {type:'CONSIGNMENT'}).type === 'BRANCH');
+  ev.forEach(e => { if (!e.buyer || e.buyer === 'No buyer assigned') return; const a = P_(bscKey(e.buyer)); nameOf(a, e.buyer); a.so++; a.soDays += e.days; a.soLost += e.lostSales; if (e.ongoing) a.soNow++; });
+  // branches only: corp DCs and consignment locations don't count toward anyone's score
+  fillView().filter(f => f.type === 'BRANCH').forEach(f => { if (!f.buyer || f.buyer === 'No buyer assigned') return; const a = P_(bscKey(f.buyer)); nameOf(a, f.buyer);
+    a.fillJ += f.judged; a.fillF += f.filled; a.orderLines += f.lines; });
+  // stock they bought that is still on hand (PO requester on the FIFO layer)
+  if (buyerRows.length) buyerView().forEach(b => { if (!b.buyer || /^\(/.test(b.buyer)) return; const a = P_(bscKey(b.buyer)); nameOf(a, b.buyer);
+    a.bought += b.cost; if (b.r.type === 'BRANCH') { a.branch += b.cost; if (b.r.status === 'DEAD' || b.r.status === 'SLOW') a.dsv += b.cost; } });
+  // edits: min/max and cost changes credited to the person who made the last change
+  mmRows.filter(m => (locMeta.get(String(m.location_id)) || {type:'CONSIGNMENT'}).type === 'BRANCH').forEach(m => { const n = m.changed_by_name || m.changed_by; if (!n) return; const a = P_(bscKey(n)); nameOf(a, m.changed_by_name || bscName(m.changed_by)); a.mm.push(m); });
+  costRows.forEach(c => { const n = c.changed_by_name || c.changed_by; if (!n) return; const a = P_(bscKey(n)); nameOf(a, c.changed_by_name || bscName(c.changed_by)); a.cc.push(costCheck(c)); });
+  return [...people.values()].filter(a => a.name && a.name !== BRANCH_SPEC).map(a => {
+    const mmUp = a.mm.filter(m => m.max_after != null && m.max_before != null && +m.max_after > +m.max_before).length;
+    const mmDown = a.mm.filter(m => m.max_after != null && m.max_before != null && +m.max_after < +m.max_before).length;
+    const big = a.cc.filter(c => c.big).length, off = a.cc.filter(c => c.off).length, look = a.cc.filter(c => c.look).length, zeroN = a.cc.filter(c => c.zero).length;
+    const o = {...a, team:corpBuyer(a.name), linesPerPo:a.pos ? a.lines / a.pos : null, onTime:a.judged >= 20 ? a.onTimeN / a.judged : null,
+      cancel:a.lines >= 20 ? a.canceled / a.lines : null, soRate:a.orderLines >= 200 ? a.so / a.orderLines : null, fill:a.fillJ >= 200 ? a.fillF / a.fillJ : null,
+      dsPct:a.branch >= 25000 ? a.dsv / a.branch : null, mmN:a.mm.length, mmUp, mmDown, ccN:a.cc.length, big, off, look, zeroN,
+      costOk:a.cc.length - zeroN >= 10 ? 1 - look / (a.cc.length - zeroN) : null, priceEditPct:a.lines ? a.priceEdits / a.lines : null};
+    return o;
+  });
+}
+
+// grade a group: stockout rate on their suppliers and productivity (PO lines vs the group median), 50/50
+function bscScore(list){
+  const ln = list.map(a => a.lines).filter(v => v > 0).sort((x, y) => x - y), medLines = ln.length ? ln[Math.floor(ln.length / 2)] : null;
+  list.forEach(o => {
+    o.medLines = medLines; o.prod = medLines && o.lines > 0 ? o.lines / medLines : null;
+    let w = 0, sc = 0;
+    o.parts = BSC_PARTS.map(p => { const v = p.f(o[p.k]); if (v != null) { w += p.w; sc += v * p.w; } return {...p, v:o[p.k], sc:v}; });
+    o.score = w >= 50 ? sc / w : null; o.grade = bscGrade(o.score); o.why = bscWhy(o);
+  });
+  return list;
+}
+function renderBuyerScorecard(){
+  const scope = S.bscScope || 'team'; segOn('bscScope', scope);
+  const all = buyerScoreData();
+  const list = bscScore(all.filter(a => scope === 'team' ? a.team : (a.pos >= 25 || a.mmN >= 25 || a.ccN >= 25 || a.so >= 25)));
+  BSC_LAST = {list, scope};
+  const graded = list.filter(a => a.score != null).sort((x, y) => y.score - x.score);
+  graded.forEach((a, i) => a.rank = i + 1);
+  const med = k => { const v = list.map(a => a[k]).filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const tot = k => sum(list, a => a[k] || 0);
+  // story
+  const top = graded[0], most = list.slice().sort((x, y) => y.pos - x.pos)[0], looks = tot('look');
+  story('st_bsc', [list.length
+    ? `${B(nf(list.length))} ${scope === 'team' ? 'people on the corporate purchasing team' : 'people with 25+ POs, edits or stockouts'} wrote ${B(nf(tot('pos')))} POs (${nf(tot('lines'))} lines, ${compact(tot('value'))}) in the last 180 days, and made ${nf(tot('mmN'))} min/max and ${nf(tot('ccN'))} cost changes in the last 90.`
+    : 'No buyer activity in this dataset yet. Refresh to load the buyer_activity module.',
+    top ? `Highest score: ${B(top.name)} (${top.grade.g}, ${Math.round(top.score)}). Most POs: ${B(most.name)} (${nf(most.pos)}).${looks ? ` ${B(nf(looks))} cost changes moved 50% or more and landed 25%+ away from what we have paid on POs over the last year, worth a second look.` : ''}` : '']);
+  $('bscStats').innerHTML =
+    stat('POs written, 180 days', nf(tot('pos')), `${nf(tot('lines'))} lines · ${med('linesPerPo') == null ? '–' : nf(med('linesPerPo'), 1)} lines per PO (median)`) +
+    stat('PO lines on time', pctTxt0(sum(list, a => a.onTimeN) / Math.max(1, sum(list, a => a.judged))), 'received in full by the due date') +
+    stat('Stockouts on their suppliers', nf(tot('so')), `${compact(tot('soLost'))} est. lost sales · ${nf(tot('soNow'))} out now`, 'warn') +
+    stat('Min/max lines edited, 90 days', nf(tot('mmN')), `${nf(tot('mmUp'))} max raised · ${nf(tot('mmDown'))} lowered`) +
+    stat('Cost changes worth a look', nf(looks), `of ${nf(tot('ccN'))} cost changes · 50%+ move and 25%+ off PO history`, looks ? 'bad' : '');
+  // leaderboards
+  const BOARDS = [
+    {k:'pos', t:'Most POs written', f:v => nf(v)}, {k:'lines', t:'Most PO lines', f:v => nf(v)}, {k:'value', t:'Most PO value', f:v => compact(v)},
+    {k:'so', t:'Most stockouts on their suppliers', f:v => nf(v)}, {k:'mmN', t:'Most min/max lines edited', f:v => nf(v)}, {k:'ccN', t:'Most cost changes', f:v => nf(v)},
+    {k:'look', t:'Cost changes worth a look', f:v => nf(v)}, {k:'onTime', t:'Best on-time PO lines', f:v => pctTxt0(v)}
+  ];
+  $('bscBoards').innerHTML = BOARDS.map(b => {
+    const rs = list.filter(a => a[b.k] != null && a[b.k] > 0).sort((x, y) => y[b.k] - x[b.k]).slice(0, 5), mx = rs.length ? rs[0][b.k] : 1;
+    return `<div class="bsc-board"><h4>${b.t}</h4>${rs.length ? '<ol>' + rs.map((a, i) => `<li data-who="${esc(a.key)}"><span class="rk">${i + 1}</span><span class="nm">${esc(a.name)}</span><b>${b.f(a[b.k])}</b><i style="width:${(a[b.k] / mx * 100).toFixed(1)}%"></i></li>`).join('') + '</ol>' : '<p class="muted">No data</p>'}</div>`;
+  }).join('');
+  $('bscBoards').querySelectorAll('[data-who]').forEach(li => li.onclick = () => openBuyerCard(list.find(a => a.key === li.dataset.who), list));
+  // charts
+  chartDefaults();
+  $('bscBox').style.height = Math.max(200, graded.length * 30 + 50) + 'px';
+  make('cBSC', hbarCfg(graded.map(a => a.name), graded.map(a => Math.round(a.score)), graded.map(a => a.grade.c), v => nf(v), 'score, 0–100'));
+  DRILL.cBSC = i => openBuyerCard(graded[i], list); TFILT.cBSC = DRILL.cBSC;
+  const cc = list.filter(a => a.ccN).sort((x, y) => y.ccN - x.ccN).slice(0, 12);
+  $('bscCostBox').style.height = Math.max(200, cc.length * 30 + 70) + 'px';
+  make('cBSCcost', {type:'bar', data:{labels:cc.map(a => a.name), datasets:[
+      {label:'In line with PO history', data:cc.map(a => a.cc.filter(c => !c.big && !c.off && !c.zero && c.vsPo != null).length), backgroundColor:css('--s-active')},
+      {label:'Large change, matches PO history', data:cc.map(a => a.cc.filter(c => c.big && !c.off).length), backgroundColor:css('--s-corp')},
+      {label:'Off PO history', data:cc.map(a => a.cc.filter(c => c.off && !c.big).length), backgroundColor:css('--s-aging')},
+      {label:'Large change, off PO history', data:cc.map(a => a.look), backgroundColor:css('--s-dead')},
+      {label:'Set to $0', data:cc.map(a => a.zeroN), backgroundColor:css('--s-consign')},
+      {label:'No recent POs', data:cc.map(a => a.cc.filter(c => c.vsPo == null && !c.big && !c.zero).length), backgroundColor:css('--s-other')}]},
+    options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
+      scales:{x:{stacked:true, ticks:{callback:v => nf(v)}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{filter:i => i.raw > 0, callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)}`}}}}});
+  DRILL.cBSCcost = i => openBuyerCard(cc[i], list, 'cost'); TFILT.cBSCcost = DRILL.cBSCcost;
+  // table
+  const rankOf = k => { const m = new Map(); list.filter(a => a[k] != null).sort((x, y) => y[k] - x[k]).forEach((a, i) => m.set(a.key, i + 1)); return m; };
+  const rp = rankOf('pos'), rs = rankOf('so'), rl = rankOf('lines');
+  const rows = list.map(a => ({...a, rPos:rp.get(a.key) || null, rSo:rs.get(a.key) || null, rLines:rl.get(a.key) || null}));
+  table('tBSC', [
+    {k:'rank', h:'Rank', type:'num'}, {k:'name', h:'Buyer'}, {k:'score', h:'Grade', get:r => r.score == null ? null : Math.round(r.score), html:bscGradePill, csv:r => r.score == null ? '' : r.grade.g + ' ' + Math.round(r.score)},
+    {k:'drag', h:'Biggest drag', get:r => r.why.drag ? r.why.drag.label : '', html:r => r.why.drag ? `${esc(r.why.drag.label)} <span class="muted">${r.why.drag.show(r.why.drag.v)}</span>` : '<span class="muted">–</span>', title:'The measure costing the most points'},
+    {k:'toA', h:'Points to an A', type:'num1', get:r => r.why.toA, html:r => r.score == null ? '<span class="muted">–</span>' : r.why.toA ? nf(r.why.toA, 1) : '<span class="pill" style="--c:#1baf7a"><i></i>A</span>'},
+    {k:'pos', h:'POs', type:'num', title:'POs entered in the last 180 days'}, {k:'rPos', h:'POs rank', type:'num'}, {k:'lines', h:'PO lines', type:'num'}, {k:'rLines', h:'Lines rank', type:'num'},
+    {k:'linesPerPo', h:'Lines / PO', type:'num1'}, {k:'value', h:'PO value', type:'money'}, {k:'suppliers', h:'Suppliers', type:'num'},
+    {k:'onTime', h:'On time', type:'pct', title:'PO lines received in full by the due date'}, {k:'cancel', h:'Canceled', type:'pct', title:'Share of PO lines canceled'},
+    {k:'so', h:'Stockouts', type:'num', title:'Stockouts on the suppliers they are assigned to, 180 days'}, {k:'rSo', h:'Stockouts rank', type:'num'},
+    {k:'soRate', h:'Stockout rate', type:'pct'}, {k:'fill', h:'Line fill', type:'pct'}, {k:'dsPct', h:'Dead + slow bought', type:'pct'},
+    {k:'mmN', h:'Min/max edits', type:'num', title:'Item-locations where they made the last min/max change, 90 days'}, {k:'ccN', h:'Cost changes', type:'num', title:'Items where they made the last cost change, 90 days'},
+    {k:'big', h:'50%+ changes', type:'num'}, {k:'off', h:'Off PO history', type:'num', title:'New cost 25%+ away from the 12-month median PO price'},
+    {k:'look', h:'Worth a look', type:'num', title:'50%+ change and 25%+ off PO history'}, {k:'zeroN', h:'Set to $0', type:'num', title:'Costs changed to zero, usually a cleanup'}, {k:'priceEditPct', h:'PO price edited', type:'pct', title:'PO lines where the price was edited by hand'},
+    {k:'expedited', h:'Expedited lines', type:'num'}, {k:'lead', h:'Avg lead days', type:'num1'}, {k:'lastPo', h:'Last PO', type:'date'}
+  ], rows, {sortKey:'rank', sortDir:1, footId:'fBSC', exportId:'xBSC', exportName:'buyer_scorecard', hidden:['rPos', 'rLines', 'rSo', 'suppliers', 'priceEditPct', 'expedited', 'lead', 'value'],
+    onRow:r => openBuyerCard(r, list)});
+}
+
+// neutral observations for one person, compared with the group's median
+function buyerNotes(a, list){
+  const med = k => { const v = list.map(x => x[k]).filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const rank = k => list.filter(x => x[k] != null).sort((x, y) => y[k] - x[k]).findIndex(x => x.key === a.key) + 1;
+  const n = [], totPos = sum(list, x => x.pos);
+  if (a.pos) n.push(`Wrote ${nf(a.pos)} POs (${nf(a.lines)} lines, ${compact(a.value)}), #${rank('pos')} of ${list.filter(x => x.pos).length}${totPos ? `, ${pct(a.pos, totPos)} of the group's POs` : ''}.`);
+  const lp = med('linesPerPo');
+  if (a.linesPerPo != null && lp && Math.abs(a.linesPerPo / lp - 1) > 0.25) n.push(`Averages ${nf(a.linesPerPo, 1)} lines per PO against a group median of ${nf(lp, 1)}${a.linesPerPo < lp ? ', so more, smaller POs' : ', so fewer, larger POs'}.`);
+  const sr = med('soRate');
+  if (a.soRate != null && sr) n.push(`Stockout rate on their suppliers is ${pctTxt0(a.soRate)} (group median ${pctTxt0(sr)}), ${nf(a.so)} stockouts and about ${compact(a.soLost)} in estimated lost sales.`);
+  if (a.onTime != null) n.push(`${pctTxt0(a.onTime)} of their PO lines arrived in full by the due date${med('onTime') ? ` (group median ${pctTxt0(med('onTime'))})` : ''}.`);
+  if (a.dsPct != null) n.push(`${pctTxt0(a.dsPct)} of the branch stock they bought is now dead or slow (${compact(a.dsv)})${med('dsPct') ? `, group median ${pctTxt0(med('dsPct'))}` : ''}.`);
+  if (a.mmN) n.push(`Made the last min/max change on ${nf(a.mmN)} item-locations in 90 days (${nf(a.mmUp)} max raised, ${nf(a.mmDown)} lowered).`);
+  if (a.ccN) n.push(`Made ${nf(a.ccN)} cost changes in 90 days. ${nf(a.big)} moved 50% or more; ${nf(a.off)} land 25%+ away from the 12-month PO price${a.look ? `, and ${B(nf(a.look))} are both, worth a second look` : ''}.`);
+  if (a.zeroN) n.push(`Set ${nf(a.zeroN)} costs to $0${a.cc.filter(c => c.zero && c.cost_type === 'standard_cost').length === a.zeroN ? ' (all standard cost)' : ''}. Usually a cleanup; worth confirming it was intended.`);
+  if (a.cancel != null && med('cancel') != null && a.cancel > Math.max(0.03, med('cancel') * 2)) n.push(`${pctTxt0(a.cancel)} of their PO lines were canceled, about ${nf(a.cancel / Math.max(0.001, med('cancel')), 1)}× the group median.`);
+  if (a.keyedOther) n.push(`${nf(a.keyedOther)} of their POs were keyed in by someone else.`);
+  if (a.lastPo) n.push(`Last PO ${shortDate(a.lastPo)}.`);
+  return n;
+}
+function openBuyerCard(a, list, view){
+  if (!a) return;
+  const notes = buyerNotes(a, list);
+  const ccRows = a.cc.map(c => ({...c, absChg:c.pctChg == null ? null : Math.abs(c.pctChg)}));
+  openDrill({title:a.name, sub:(a.score == null ? 'Not enough data to grade' : `Grade ${a.grade.g} · score ${Math.round(a.score)}${a.rank ? ` · #${a.rank} in this group` : ''}`) + (a.team ? ' · corporate purchasing team' : ''),
+    action:{label:'Share card', fn:() => openBuyerShare(a.key)},
+    facts:[['POs, 180 days', nf(a.pos)], ['PO lines', nf(a.lines)], ['Stockouts', nf(a.so)], ['Min/max edits', nf(a.mmN)], ['Cost changes', nf(a.ccN)], ['Worth a look', nf(a.look)]],
+    note:'<h4>Why this grade</h4><ul>' + a.why.lines.map(x => `<li>${x}</li>`).join('') + '</ul>' +
+      (a.score == null ? '' : a.why.toA ? `<h4 style="margin-top:12px">To reach an A (${BSC_GRADES[0].min}+), about ${nf(a.why.toA, 1)} points to go</h4><ol>` + a.why.plan.map(p => `<li><b>${esc(p.label)} (+${nf(p.gain, 1)} pts).</b> ${p.plan(a, p.to)}</li>`).join('') + '</ol>'
+        : `<h4 style="margin-top:12px">At an A</h4><p style="margin:0">To stay there, keep an eye on ${a.why.drag ? `${bscLc(a.why.drag.label)} (${a.why.drag.show(a.why.drag.v)}), the measure with the most room left` : 'every measure'}.</p>`) +
+      '<h4 style="margin-top:12px">Things to point out</h4><ul>' + notes.map(x => `<li>${x}</li>`).join('') + '</ul>',
+    chart:{title:'Score breakdown', sub:'Each measure earns 0–100 between “needs work” and target: ' + BSC_PARTS.map(p => `${bscLc(p.label)} ${p.show(p.bad)} → ${p.show(p.good)} (weight ${p.w})`).join(', ') + '.',
+      cfg:hbarCfg(a.parts.map(p => `${p.label} · ${p.show(p.v)}`), a.parts.map(p => p.sc == null ? 0 : Math.round(p.sc)), a.parts.map(p => p.sc == null ? css('--s-other') : (bscGrade(p.sc) || BSC_GRADES[4]).c), v => nf(v)),
+      height:BSC_PARTS.length * 34 + 50},
+    table:{title:view === 'mm' ? 'Min/max changes' : 'Cost changes', view:view === 'mm' ? 'items' : 'locs', altLabels:['Cost changes', 'Min/max changes'], exportName:'buyer_' + a.name.replace(/\W+/g, '_'),
+      rows:ccRows, sortKey:'sev', hidden:['sev'], onRow:r => openItem(r.item),
+      cols:[{k:'sev', h:'Severity', type:'num1'}, {k:'item', h:'Item'}, {k:'cost_type', h:'Cost', get:r => r.cost_type === 'cost' ? 'Supplier cost' : 'Standard cost'}, {k:'ub', h:'Unit cost before', type:'num1', html:r => r.ub == null ? '' : '$' + nf(r.ub, 4)},
+        {k:'ua', h:'Unit cost after', type:'num1', html:r => r.ua == null ? '' : '$' + nf(r.ua, 4)}, {k:'pctChg', h:'Change', type:'pct'}, {k:'med', h:'Median PO price', type:'num1', html:r => r.med == null ? '<span class="muted">–</span>' : '$' + nf(r.med, 4)},
+        {k:'vsPo', h:'vs PO history', type:'pct'}, {k:'nPo', h:'PO lines, 12 mo', type:'num'},
+        {k:'flag', h:'Check', html:r => `<span class="pill" style="--c:${r.look ? 'var(--s-dead)' : r.off ? 'var(--s-aging)' : r.big ? 'var(--s-corp)' : r.zero ? 'var(--s-consign)' : 'var(--s-other)'}"><i></i>${esc(r.flag)}</span>`, filter:'set'},
+        {k:'last_changed', h:'Changed', type:'date'}],
+      alt:{rows:a.mm.map(m => ({...m, locLabel:locName(String(m.location_id)), dMax:m.max_after != null && m.max_before != null ? +m.max_after - +m.max_before : null})), sortKey:'last_changed',
+        cols:[{k:'item', h:'Item'}, {k:'locLabel', h:'Location'}, {k:'min_before', h:'Min before', type:'num'}, {k:'min_after', h:'Min after', type:'num'},
+              {k:'max_before', h:'Max before', type:'num'}, {k:'max_after', h:'Max after', type:'num'}, {k:'dMax', h:'Max change', type:'num'},
+              {k:'method_after', h:'Method'}, {k:'edits', h:'Edits', type:'num'}, {k:'last_changed', h:'Changed', type:'date'}]}}});
+}
+
+/* ---- Shareable buyer card: one person's scorecard with everyone else anonymized. Other names never enter the file. ---- */
+let BSC_LAST = {list:[], scope:'team'};
+const HTML2CANVAS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+const bscLc = t => t.replace(/^[A-Z][a-z]/, m => m.toLowerCase());
+function buyerCardHtml(a, list){
+  const e = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
+  const stripB = t => String(t).replace(/<\/?b>/g, '');
+  const tint = hex => { const n = parseInt(String(hex).slice(1), 16); return isNaN(n) ? '#f2f4f7' : `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},.14)`; };   // plain rgba so the image export can read it
+  const ranked = list.filter(x => x.score != null).sort((x, y) => y.score - x.score);
+  const others = list.filter(x => x.score == null);
+  const med = k => { const v = list.map(x => x[k]).filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const asOf = new Date(P.generated_at).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+  const group = BSC_LAST.scope === 'team' ? 'the corporate purchasing team' : 'buyers with 25+ POs or edits';
+  const g = a.grade || {g:'–', c:'#898781'};
+  const rankTxt = a.score == null ? 'Not enough data to grade yet' : `#${ranked.indexOf(a) + 1} of ${ranked.length} on ${group}`;
+  const bar = (sc, c) => sc == null ? '<span class="na">not enough data</span>' : `<span class="bar"><i style="width:${Math.round(sc)}%;background:${c}"></i></span><span class="pts">${Math.round(sc)}</span>`;
+  const meas = a.parts.map(p => `<tr><td>${e(p.label)}<div class="sub">${e(p.tip)}</div></td><td class="n"><b>${p.show(p.v)}</b></td><td class="n">${p.show(med(p.k))}</td><td class="n">${p.show(p.good)}</td><td class="n">${p.w}</td><td class="pt">${bar(p.sc, p.sc == null ? '#ccc' : (bscGrade(p.sc) || BSC_GRADES[4]).c)}</td></tr>`).join('');
+  const row = (x, i) => { const me = x === a, gx = x.grade;
+    return `<tr class="${me ? 'me' : ''}"><td class="n">${x.score == null ? '–' : i + 1}</td><td>${me ? `<b>${e(x.name)}</b> <span class="you">you</span>` : '<span class="hidden-name" aria-label="name hidden">Buyer name</span>'}</td>
+      <td>${gx ? `<span class="pill" style="--c:${gx.c};background:${tint(gx.c)}">${gx.g} · ${Math.round(x.score)}</span>` : '–'}</td><td class="n">${nf(x.pos)}</td><td class="n">${nf(x.lines)}</td>
+      <td class="n">${pctTxt0(x.soRate)}</td><td class="n">${pctTxt0(x.fill)}</td><td class="n">${pctTxt0(x.dsPct)}</td><td class="n">${pctTxt0(x.onTime)}</td><td class="n">${nf(x.mmN)}</td><td class="n">${nf(x.ccN)}</td></tr>`; };
+  const why = a.why.lines.map(x => `<li>${e(stripB(x))}</li>`).join('');
+  const plan = a.score == null ? '' : a.why.toA
+    ? `<h2>To reach an A (${BSC_GRADES[0].min}+): about ${nf(a.why.toA, 1)} points to go</h2><ol class="plan">${a.why.plan.map(p => `<li><b>${e(p.label)}</b> <span class="gain">+${nf(p.gain, 1)} pts</span><br>${e(p.plan(a, p.to))}</li>`).join('')}</ol>`
+    : `<h2>You're at an A</h2><p>To stay there, keep an eye on ${a.why.drag ? `${e(bscLc(a.why.drag.label))} (${a.why.drag.show(a.why.drag.v)}), the measure with the most room left` : 'every measure'}.</p>`;
+  const notes = buyerNotes(a, list).map(x => `<li>${e(stripB(x))}</li>`).join('');
+  const fb = feedbackEmail();
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Buyer scorecard - ${e(a.name)}</title>
+<style>
+:root{color-scheme:light;--ink:#101828;--ink2:#475467;--muted:#667085;--line:#e6e8ec;--soft:#f6f7f9;--accent:#0b7a83}
+*{box-sizing:border-box}body{margin:0;background:#eef1f4;color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:24px 16px}
+.card{max-width:980px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 12px 32px -12px rgba(16,24,40,.25);overflow:hidden}
+.head{display:flex;gap:20px;align-items:center;justify-content:space-between;padding:24px 28px;background:linear-gradient(135deg,#0f1729,#18233a);color:#fff;flex-wrap:wrap}
+.head h1{margin:0;font-size:24px;letter-spacing:-.01em}.head .k{color:#c9d1de;font-size:13px;margin-top:2px}
+.grade{display:flex;align-items:center;gap:14px}.big{width:68px;height:68px;border-radius:18px;display:grid;place-items:center;font-size:34px;font-weight:800;color:#fff;background:${g.c}}
+.grade .s{font-size:13px;color:#c9d1de}.grade .s b{display:block;color:#fff;font-size:22px}
+.body{padding:8px 28px 24px}h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:22px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.sub{font-size:11.5px;color:var(--muted)}.bar{display:inline-block;width:120px;height:8px;background:var(--soft);border-radius:8px;overflow:hidden;vertical-align:middle}.bar i{display:block;height:100%;border-radius:8px}
+.pts{display:inline-block;width:30px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}td.pt{white-space:nowrap;min-width:170px}.na{color:var(--muted);font-size:12px}
+tr.me td{background:#e6f4f5}.you{font-size:11px;background:var(--accent);color:#fff;border-radius:999px;padding:1px 7px;margin-left:4px}
+.hidden-name{filter:blur(4.5px);user-select:none;color:var(--ink2)}
+.pill{display:inline-flex;white-space:nowrap;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;color:#101828}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+ul,ol{margin:0;padding-left:20px}li{margin:4px 0}.plan li{margin:8px 0}.gain{font-size:12px;color:var(--accent);font-weight:600}
+.wrap{overflow-x:auto}.foot{padding:14px 28px;background:var(--soft);font-size:12.5px;color:var(--ink2);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media print{body{background:#fff;padding:0}.card{box-shadow:none}}
+</style></head><body><div class="card">
+<div class="head"><div><div class="k">Buyer scorecard · last 180 days · as of ${e(asOf)}</div><h1>${e(a.name)}</h1><div class="k">${e(rankTxt)}</div></div>
+<div class="grade"><div class="big">${e(g.g)}</div><div class="s">Score<b>${a.score == null ? '–' : Math.round(a.score)}</b>out of 100</div></div></div>
+<div class="body">
+<h2>Your measures</h2><div class="wrap"><table><thead><tr><th>Measure</th><th class="n">You</th><th class="n">Team median</th><th class="n">Target</th><th class="n">Weight</th><th>Points (0–100)</th></tr></thead><tbody>${meas}</tbody></table></div>
+<h2>Why this grade</h2><ul>${why}</ul>
+${plan}
+<h2>Where you stand</h2><p class="sub" style="margin:0 0 6px">Everyone on ${e(group)}, ranked by score. Other names are hidden; their numbers are real. Branch locations only.</p>
+<div class="wrap"><table><thead><tr><th class="n">Rank</th><th>Buyer</th><th>Grade</th><th class="n">POs</th><th class="n">PO lines</th><th class="n">Stockout rate</th><th class="n">Line fill</th><th class="n">Dead + slow</th><th class="n">On time</th><th class="n">Min/max edits</th><th class="n">Cost changes</th></tr></thead>
+<tbody>${ranked.map(row).join('')}${others.map(x => row(x, 0)).join('')}</tbody></table></div>
+<h2>Things to point out</h2><ul>${notes}</ul>
+</div>
+<div class="foot"><span>Grades: A ${BSC_GRADES[0].min}+, B ${BSC_GRADES[1].min}+, C ${BSC_GRADES[2].min}+, D ${BSC_GRADES[3].min}+. These are conversation starters, not verdicts.</span><span>Questions or feedback: ${e(fb)}</span></div>
+</div></body></html>`;
+}
+const bscCardName = a => `Buyer scorecard - ${fileSafe(a.name)} - ${String(P.generated_at || todayIso()).slice(0, 10)}.html`;
+function openBuyerShare(who){
+  const list = BSC_LAST.list, people = list.filter(x => x.score != null).sort((x, y) => y.score - x.score).concat(list.filter(x => x.score == null));
+  if (!people.length) return toast('No buyers to share yet.');
+  const sel = $('bsBuyer');
+  sel.innerHTML = people.map((x, i) => `<option value="${i}">${esc(x.name)}${x.grade ? ` · ${x.grade.g} ${Math.round(x.score)}` : ''}</option>`).join('');
+  const idx = Math.max(0, people.findIndex(x => x.key === who));
+  sel.value = String(idx);
+  const show = () => { const a = people[+sel.value]; $('bsFrame').srcdoc = buyerCardHtml(a, list); };
+  sel.onchange = show; show();
+  $('bsHtml').onclick = () => { const a = people[+sel.value]; saveBlob(new Blob([buyerCardHtml(a, list)], {type:'text/html'}), bscCardName(a)); toast(`Card for ${a.name} downloaded`); };
+  $('bsPng').onclick = async () => {
+    const a = people[+sel.value], btn = $('bsPng'); btn.disabled = true;
+    try {
+      await loadScript(HTML2CANVAS_URL);
+      const doc = $('bsFrame').contentDocument, el = doc.querySelector('.card');
+      const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', windowWidth:1040});
+      canvas.toBlob(b => { saveBlob(b, bscCardName(a).replace(/\.html$/, '.png')); toast(`Image for ${a.name} downloaded`); });
+    } catch (ex) { toast('Could not make the image: ' + ex.message + '. Use the .html card instead.'); }
+    finally { btn.disabled = false; }
+  };
+  $('bsZip').onclick = async () => {
+    const btn = $('bsZip'); btn.disabled = true;
+    try { await loadScript(JSZIP_URL); const zip = new JSZip(); people.forEach(a => zip.file(bscCardName(a), buyerCardHtml(a, list)));
+      saveBlob(await zip.generateAsync({type:'blob', compression:'DEFLATE'}), `Buyer scorecards - ${String(P.generated_at || todayIso()).slice(0, 10)}.zip`); toast(`${people.length} cards downloaded in one .zip file`); }
+    catch (ex) { toast(ex.message); } finally { btn.disabled = false; }
+  };
+  if (!$('bsDlg').open) $('bsDlg').showModal();
+}
+
+/* ---- Branch performance vs purchasing: how each branch runs, and how much of its buying the corporate team does ---- */
+const BR_PARTS = [
+  {k:'fill',   label:'Customer line fill', w:30, bad:0.70, good:0.95, show:v => pctTxt0(v), tip:'Order lines for stocked items shipped complete within 2 business days, 180 days'},
+  {k:'soRate', label:'Stockout rate',      w:30, bad:0.08, good:0.015, show:v => pctTxt0(v), tip:'Stockouts ÷ customer order lines for stocked items, 180 days'},
+  {k:'dsPct',  label:'Dead + slow stock',  w:20, bad:0.35, good:0.05, show:v => pctTxt0(v), tip:'Share of the branch’s cost on hand that is dead or slow'},
+  {k:'turns',  label:'Turns',              w:20, bad:1, good:5, show:v => v == null ? '–' : nf(v, 1) + '×', tip:'Last 12 months’ COGS ÷ cost on hand'}
+].map(p => ({...p, f:v => bscLin(v, p.bad, p.good)}));
+function branchData(v){
+  const br = new Map();
+  locMeta.forEach((m, loc) => { if (m.type === 'BRANCH') br.set(loc, {loc, name:locName(loc), cost:0, ds:0, cogs:0, sales:0, judged:0, filled:0, lines:0, so:0, soLost:0, soNow:0,
+    corpLines:0, brLines:0, otherLines:0, corpVal:0, brVal:0, otherVal:0, corpPos:0, brPos:0, judgedPo:0, onTimePo:0, writers:[], boughtCorp:0, boughtBranch:0, boughtOther:0}); });
+  const B_ = loc => br.get(String(loc));
+  v.base.forEach(r => { const a = B_(r.loc); if (!a) return; a.cost += r.cost; if (r.status === 'DEAD' || r.status === 'SLOW') a.ds += r.cost; });
+  salesRows.forEach(s => { const a = B_(s.loc); if (!a || !passes(lineRow(s.item, s.loc))) return; a.cogs += s.cogs; a.sales += s.sales; });
+  fillView().forEach(f => { const a = B_(f.loc); if (!a) return; a.judged += f.judged; a.filled += f.filled; a.lines += f.lines; });
+  stockoutView().forEach(e => { const a = B_(e.loc); if (!a) return; a.so++; a.soLost += e.lostSales; if (e.ongoing) a.soNow++; });
+  (modRows('branch_purchasing') || []).forEach(x => { const a = B_(x.location_id); if (!a) return;
+    const who = x.buyer || '(no requester)', grp = who === '(no requester)' ? 'other' : corpBuyer(who) ? 'corp' : 'branch';
+    const ln = +x.po_lines || 0, val = +x.po_value || 0;
+    const f = grp === 'branch' ? 'br' : grp; a[f + 'Lines'] += ln; a[f + 'Val'] += val; if (grp === 'corp') a.corpPos += +x.pos || 0; else if (grp === 'branch') a.brPos += +x.pos || 0;
+    a.judgedPo += +x.lines_judged || 0; a.onTimePo += +x.lines_on_time || 0;
+    a.writers.push({name:who, grp, pos:+x.pos || 0, lines:ln, value:val, stockLines:+x.stock_lines || 0, onTime:+x.lines_judged ? +x.lines_on_time / +x.lines_judged : null}); });
+  if (buyerRows.length) buyerView().forEach(b => { const a = B_(b.r.loc); if (!a) return;
+    if (b.dept === 'Purchasing Department') a.boughtCorp += b.cost; else if (b.dept === 'Branch') a.boughtBranch += b.cost; else a.boughtOther += b.cost; });
+  const list = [...br.values()].filter(a => a.cost > 0 || a.lines > 0 || a.corpLines + a.brLines > 0).map(a => {
+    const poLines = a.corpLines + a.brLines + a.otherLines, poVal = a.corpVal + a.brVal + a.otherVal, bought = a.boughtCorp + a.boughtBranch + a.boughtOther;
+    const o = {...a, poLines, poVal, fill:a.judged >= 200 ? a.filled / a.judged : null, soRate:a.lines >= 200 ? a.so / a.lines : null,
+      dsPct:a.cost >= 25000 ? a.ds / a.cost : null, turns:a.cost > 0 && a.cogs > 0 ? a.cogs / a.cost : null,
+      corpShare:poLines ? a.corpLines / poLines : null, corpValShare:poVal ? a.corpVal / poVal : null, boughtCorpShare:bought ? a.boughtCorp / bought : null,
+      poOnTime:a.judgedPo ? a.onTimePo / a.judgedPo : null, nBranchWriters:a.writers.filter(w => w.grp === 'branch').length,
+      topBranch:a.writers.filter(w => w.grp === 'branch').sort((x, y) => y.lines - x.lines)[0] || null};
+    let w = 0, s = 0; o.parts = BR_PARTS.map(p => { const sc = p.f(o[p.k]); if (sc != null) { w += p.w; s += sc * p.w; } return {...p, v:o[p.k], sc}; });
+    o.score = w >= 50 ? s / w : null; o.grade = bscGrade(o.score);
+    const lost = o.parts.filter(p => p.sc != null).map(p => ({...p, lostPts:(100 - p.sc) * p.w / w})).sort((x, y) => y.lostPts - x.lostPts);
+    o.drag = lost[0] && lost[0].lostPts >= 1 ? lost[0] : null;
+    return o;
+  });
+  list.filter(a => a.score != null).sort((x, y) => y.score - x.score).forEach((a, i) => a.rank = i + 1);
+  return list;
+}
+function renderBranches(v){
+  $('brNotice').innerHTML = modNotice(['branch_purchasing', 'fill_rate', 'stockout_events', 'sales_12m']);
+  const list = branchData(v), graded = list.filter(a => a.score != null).sort((x, y) => y.score - x.score);
+  const tot = k => sum(list, a => a[k] || 0);
+  const corpL = tot('corpLines'), allL = tot('poLines'), corpV = tot('corpVal'), allV = tot('poVal');
+  // do branches that lean on the corporate team do better? (a comparison, not a cause)
+  const hi = graded.filter(a => a.corpShare != null && a.corpShare >= 0.5), lo = graded.filter(a => a.corpShare != null && a.corpShare < 0.5);
+  const avg = l => l.length ? sum(l, a => a.score) / l.length : null;
+  const pts = graded.filter(a => a.corpShare != null), n = pts.length;
+  const r = n >= 4 ? (() => { const mx = sum(pts, a => a.corpShare) / n, my = sum(pts, a => a.score) / n;
+    const cov = sum(pts, a => (a.corpShare - mx) * (a.score - my)), sx = Math.sqrt(sum(pts, a => (a.corpShare - mx) ** 2)), sy = Math.sqrt(sum(pts, a => (a.score - my) ** 2));
+    return sx && sy ? cov / (sx * sy) : null; })() : null;
+  const rTxt = r == null ? '' : Math.abs(r) < 0.2 ? 'little to no relationship' : `${Math.abs(r) < 0.5 ? 'a modest' : 'a fairly strong'} ${r > 0 ? 'positive' : 'negative'} relationship`;
+  const best = graded[0], worst = graded[graded.length - 1];
+  story('st_branches', [graded.length
+    ? `Across ${B(nf(graded.length))} branches, the corporate purchasing team wrote ${B(pct(corpL, allL))} of branch PO lines (${pct(corpV, allV)} of PO value) in the last 180 days; branch staff wrote the rest${tot('otherLines') ? ' (a few POs have no requester)' : ''}.`
+    : 'No branch data for this view.',
+    best && worst ? `Best run: ${B(best.name)} (${best.grade.g}, ${Math.round(best.score)}). Most room to improve: ${B(worst.name)} (${worst.grade.g}, ${Math.round(worst.score)})${worst.drag ? `, mostly ${bscLc(worst.drag.label)} at ${worst.drag.show(worst.drag.v)}` : ''}.` : '',
+    hi.length && lo.length ? `Branches where the corporate team writes most of the lines average ${B(nf(avg(hi)))} vs ${B(nf(avg(lo)))} for branches that mostly buy for themselves${rTxt ? `; across all branches there's ${rTxt} between corporate share and score` : ''}. Branch size, mix and staffing differ, so read this as a pointer, not proof.` : '']);
+  $('brStats').innerHTML =
+    stat('Branch PO lines, 180 days', nf(allL), `${compact(allV)} · ${nf(tot('corpPos') + tot('brPos'))} POs`) +
+    stat('Written by the corporate team', pct(corpL, allL), `${nf(corpL)} lines · ${pct(corpV, allV)} of value`) +
+    stat('Written by branch staff', pct(tot('brLines'), allL), `${nf(tot('brLines'))} lines · ${nf(sum(list, a => a.nBranchWriters))} people`) +
+    stat('Branch line fill', pctTxt0(tot('filled') / Math.max(1, tot('judged'))), `stockout rate ${pctTxt0(tot('so') / Math.max(1, tot('lines')))}`) +
+    stat('Stock on hand bought by corporate', pctTxt0(tot('boughtCorp') / Math.max(1, tot('boughtCorp') + tot('boughtBranch') + tot('boughtOther'))), 'branch stock, by the PO behind each FIFO layer');
+  chartDefaults();
+  $('brBox').style.height = Math.max(220, graded.length * 28 + 50) + 'px';
+  make('cBR', hbarCfg(graded.map(a => a.name), graded.map(a => Math.round(a.score)), graded.map(a => a.grade.c), x => nf(x), 'score, 0–100'));
+  DRILL.cBR = i => openBranch(graded[i], list); TFILT.cBR = DRILL.cBR;
+  const mix = list.filter(a => a.poLines).sort((x, y) => (y.corpShare || 0) - (x.corpShare || 0));
+  $('brMixBox').style.height = Math.max(220, mix.length * 28 + 70) + 'px';
+  make('cBRmix', {type:'bar', data:{labels:mix.map(a => a.name), datasets:[
+      {label:'Corporate team', data:mix.map(a => a.corpLines), backgroundColor:css('--accent')},
+      {label:'Branch staff', data:mix.map(a => a.brLines), backgroundColor:CAT[1]},
+      {label:'No requester', data:mix.map(a => a.otherLines), backgroundColor:css('--s-other')}]},
+    options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
+      scales:{x:{stacked:true, ticks:{callback:x => nf(x)}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{filter:i => i.raw > 0, callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)} lines (${pct(c.raw, mix[c.dataIndex].poLines)})`}}}}});
+  DRILL.cBRmix = i => openBranch(mix[i], list); TFILT.cBRmix = DRILL.cBRmix;
+  const sc = graded.filter(a => a.corpShare != null), maxS = Math.max(1, ...sc.map(a => a.sales));
+  make('cBRscatter', {type:'bubble', data:{datasets:[{label:'Branches', data:sc.map(a => ({x:a.corpShare * 100, y:a.score, r:6 + 16 * Math.sqrt(a.sales / maxS)})),
+      backgroundColor:sc.map(a => hexA(a.grade.c, .55)), borderColor:sc.map(a => a.grade.c), borderWidth:1.5}]},
+    options:{maintainAspectRatio:false, animation:ANIM(), scales:{x:{min:0, max:100, title:{display:true, text:'share of PO lines written by the corporate team'}, ticks:{callback:x => x + '%'}},
+      y:{min:0, max:100, title:{display:true, text:'branch score'}}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{title:i => sc[i[0].dataIndex].name, label:c => { const a = sc[c.dataIndex]; return [` Score ${Math.round(a.score)} (${a.grade.g})`, ` Corporate share ${pctTxt0(a.corpShare)}`, ` Sales ${compact(a.sales)}`]; }}}}}});
+  DRILL.cBRscatter = i => openBranch(sc[i], list); TFILT.cBRscatter = DRILL.cBRscatter;
+  table('tBR', [
+    {k:'rank', h:'Rank', type:'num'}, {k:'name', h:'Branch'}, {k:'score', h:'Grade', get:r => r.score == null ? null : Math.round(r.score), html:bscGradePill, csv:r => r.score == null ? '' : r.grade.g + ' ' + Math.round(r.score)},
+    {k:'dragTxt', h:'Biggest drag', get:r => r.drag ? r.drag.label : '', html:r => r.drag ? `${esc(r.drag.label)} <span class="muted">${r.drag.show(r.drag.v)}</span>` : '<span class="muted">–</span>'},
+    {k:'fill', h:'Line fill', type:'pct'}, {k:'soRate', h:'Stockout rate', type:'pct'}, {k:'so', h:'Stockouts', type:'num'}, {k:'dsPct', h:'Dead + slow', type:'pct'}, {k:'turns', h:'Turns', type:'num1'},
+    {k:'sales', h:'Sales, 12 mo', type:'money'}, {k:'cost', h:'Cost on hand', type:'money'},
+    {k:'poLines', h:'PO lines', type:'num', title:'Branch PO lines, last 180 days'}, {k:'corpShare', h:'Corporate share', type:'pct', title:'Share of PO lines written by the corporate team'},
+    {k:'corpValShare', h:'Corporate share of $', type:'pct'}, {k:'boughtCorpShare', h:'On hand bought by corporate', type:'pct', title:'Branch stock on hand by who wrote the PO behind it'},
+    {k:'nBranchWriters', h:'Branch writers', type:'num'}, {k:'topTxt', h:'Top branch writer', get:r => r.topBranch ? r.topBranch.name : '', html:r => r.topBranch ? `${esc(r.topBranch.name)} <span class="muted">${nf(r.topBranch.lines)} lines</span>` : '<span class="muted">–</span>'},
+    {k:'poOnTime', h:'PO lines on time', type:'pct'}
+  ], list, {sortKey:'rank', sortDir:1, footId:'fBR', exportId:'xBR', exportName:'branch_performance', hidden:['corpValShare', 'poOnTime', 'cost'], onRow:r => openBranch(r, list)});
+}
+function openBranch(a, list){
+  if (!a) return;
+  const graded = list.filter(x => x.score != null), med = k => { const v = list.map(x => x[k]).filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const notes = [];
+  if (a.score != null) {
+    const strong = a.parts.filter(p => p.sc != null && p.sc >= 80).map(p => `${bscLc(p.label)} (${p.show(p.v)})`), weak = a.parts.filter(p => p.sc != null && p.sc < 60).sort((x, y) => x.sc - y.sc);
+    notes.push(`Ranks #${a.rank} of ${graded.length} branches with a score of ${Math.round(a.score)}.${strong.length ? ` Strong on ${strong.join(', ')}.` : ''}`);
+    weak.forEach(p => notes.push(`${p.label} is ${p.show(p.v)} (target ${p.show(p.good)}, branch median ${p.show(med(p.k))}).`));
+  }
+  if (a.poLines) notes.push(`The corporate team wrote ${pctTxt0(a.corpShare)} of this branch's ${nf(a.poLines)} PO lines (branch median ${pctTxt0(med('corpShare'))}); ${nf(a.nBranchWriters)} branch ${a.nBranchWriters === 1 ? 'person wrote' : 'people wrote'} the rest${a.topBranch ? `, most by ${esc(a.topBranch.name)} (${nf(a.topBranch.lines)} lines)` : ''}.`);
+  if (a.boughtCorpShare != null) notes.push(`${pctTxt0(a.boughtCorpShare)} of the stock on hand was bought by the corporate team.`);
+  if (a.so) notes.push(`${nf(a.so)} stockouts in 180 days (${nf(a.soNow)} out now), about ${compact(a.soLost)} in estimated lost sales.`);
+  const ws = a.writers.slice().sort((x, y) => y.lines - x.lines);
+  openDrill({title:a.name, sub:a.score == null ? 'Not enough data to grade' : `Grade ${a.grade.g} · score ${Math.round(a.score)} · #${a.rank} of ${graded.length} branches`,
+    facts:[['Line fill', pctTxt0(a.fill)], ['Stockout rate', pctTxt0(a.soRate)], ['Dead + slow', pctTxt0(a.dsPct)], ['Turns', a.turns == null ? '–' : nf(a.turns, 1) + '×'], ['Corporate share of PO lines', pctTxt0(a.corpShare)], ['Sales, 12 mo', compact(a.sales)]],
+    note:'<h4>What stands out</h4><ul>' + notes.map(x => `<li>${x}</li>`).join('') + '</ul>',
+    action:{label:'Filter dashboard to this branch', fn:() => { S.loc = a.loc; fillFilters(); resetPaging(); render(); }},
+    chart:ws.length ? {title:'Who writes this branch’s POs', sub:'PO lines, last 180 days · teal = corporate team, orange = branch staff', cfg:hbarCfg(ws.map(w => w.name), ws.map(w => w.lines), ws.map(w => w.grp === 'corp' ? css('--accent') : w.grp === 'branch' ? CAT[1] : css('--s-other')), x => nf(x)), height:Math.max(160, ws.length * 26 + 50)} : null,
+    table:{title:'PO writers', rows:ws.map(w => ({...w, group:w.grp === 'corp' ? 'Corporate team' : w.grp === 'branch' ? 'Branch' : 'No requester', share:a.poLines ? w.lines / a.poLines : null})), sortKey:'lines', exportName:'branch_writers_' + a.loc,
+      cols:[{k:'name', h:'Writer'}, {k:'group', h:'Group', filter:'set'}, {k:'pos', h:'POs', type:'num'}, {k:'lines', h:'PO lines', type:'num'}, {k:'share', h:'Share of lines', type:'pct'},
+            {k:'value', h:'PO value', type:'money'}, {k:'stockLines', h:'Stocked-item lines', type:'num'}, {k:'onTime', h:'On time', type:'pct'}]}});
+}
 
 /* ---- Min / max changes ---- */
 function renderMinMax(){
@@ -4324,6 +4848,7 @@ function buyerView(){
   return buyerRows.filter(b => passes(b.r, true) && sel('dept', b.dept) && sel('buyer', b.buyer));
 }
 function renderBuyers(){
+  renderBuyerScorecard();
   if (!buyerRows.length) {
     $('buyerNote').textContent = 'This dataset has no buyer data. Run a refresh from the database to load it.';
     ['deptTiles'].forEach(id => $(id).innerHTML = ''); $('tBuyers').innerHTML = ''; $('tDeptStock').innerHTML = '';
@@ -4538,7 +5063,20 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(
 
 /* ================= server: refresh, downloads ================= */
 let defaults = null, polling = null;
+// hidden sample mode: Ctrl+Alt+D or five quick clicks on the logo. The server then answers from data_demo/ (made-up data).
+let SAMPLE = false;
+try { SAMPLE = localStorage.getItem('dataMode') === 'sample'; } catch {}
+const withMode = path => SAMPLE ? path + (path.includes('?') ? '&' : '?') + 'mode=sample' : path;
+function toggleSample(){
+  if (STATIC) return;
+  try { if (SAMPLE) localStorage.removeItem('dataMode'); else localStorage.setItem('dataMode', 'sample'); } catch { return; }
+  location.reload();
+}
+document.addEventListener('keydown', e => { if (e.ctrlKey && e.altKey && !e.shiftKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); toggleSample(); } });
+{ let clicks = []; document.querySelector('.brand .mark').addEventListener('click', () => { const t = Date.now(); clicks = clicks.filter(x => t - x < 2000).concat(t); if (clicks.length >= 5) { clicks = []; toggleSample(); } }); }
 async function api(path, opts){
+  opts = {...(opts || {})};
+  if (SAMPLE) opts.headers = {...(opts.headers || {}), 'X-Data-Mode':'sample'};
   const r = await fetch(path, opts);
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(body.error || r.statusText), {status:r.status});
@@ -4598,8 +5136,8 @@ function startPolling(){
 }
 $('btnRefresh').onclick = openRefresh;
 $('btnRefresh2').onclick = openRefresh;
-$('btnXlsx').onclick = () => { location.href = '/api/workbook'; };
-$('btnReport').onclick = () => { location.href = '/api/report.html'; };
+$('btnXlsx').onclick = () => { location.href = withMode('/api/workbook'); };
+$('btnReport').onclick = () => { location.href = withMode('/api/report.html'); };
 
 /* ================= events ================= */
 const onFilter = () => { resetPaging(); render(); };
@@ -4629,6 +5167,8 @@ document.querySelectorAll('#dhDim button').forEach(b => b.onclick = () => { S.dh
 $('dohTarget').onchange = e => { S.dohTarget = Math.max(1, +e.target.value || 90); lsSet('dohTarget', S.dohTarget); renderTab(); };
 document.querySelectorAll('#chDim button').forEach(b => b.onclick = () => { S.chDim = b.dataset.v; renderTab(); });
 document.querySelectorAll('#soMode button').forEach(b => b.onclick = () => { S.soMode = b.dataset.v; renderTab(); });
+$('bscShare').onclick = () => openBuyerShare();
+document.querySelectorAll('#bscScope button').forEach(b => b.onclick = () => { S.bscScope = b.dataset.v; resetTable('tBSC'); renderTab(); });
 document.querySelectorAll('#ccType button').forEach(b => b.onclick = () => { S.ccType = b.dataset.v; renderTab(); });
 // light / dark switch: follows the system until picked, then remembered in this browser
 const isDark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
