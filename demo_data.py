@@ -732,7 +732,11 @@ def build(today: dt.date | None = None, seed: int = 11):
                    round(judged * ot), round(r.uniform(6, 15), 1), round(lines * r.uniform(0.05, 0.4)), round(lines * r.uniform(0.01, 0.05)),
                    round(lines * r.uniform(0, 0.02)), r.randint(0, 8), iso(today - dt.timedelta(days=r.randint(1, 4))), r.randint(90, 124) if team else r.randint(40, 120)])
     # branch POs by writer: each branch leans on the corporate team to a different degree
-    BP, NSI = [], []
+    BP, NSI, SBB = [], [], []
+    by_size = sorted(sups, key=lambda x: -x["size"])
+    home = {x["id"]: r.randrange(4) for x in sups}
+    zone = {l[0]: min(3, i * 4 // len(branches)) for i, l in enumerate(branches)}
+    buys_at = {l[0]: [x for k, x in enumerate(by_size) if (r.random() < 0.93 if k < 35 else r.random() < (0.55 if home[x["id"]] == zone[l[0]] else 0.04))] for l in branches}
     for l in branches:
         corp_share = r.uniform(0.15, 0.85)
         ns_lean = r.uniform(0.15, 0.5)                      # how much of this branch's buying is non-stock
@@ -749,6 +753,15 @@ def build(today: dt.date | None = None, seed: int = 11):
             nsl = round(lines * ns); stl = lines - nsl
             cl = round(nsl * r.uniform(0.35, 0.55)); nl = round(nsl * r.uniform(0.02, 0.08)); dl = nsl - cl - nl
             vs = lambda k: round(val * k / lines, 2) if lines else 0
+            pool_s = buys_at[l[0]] or by_size[:10]
+            wts = [x["size"] * (3 if k < 35 else 1) for k, x in enumerate(pool_s)]
+            tw = sum(wts)
+            for x, w in zip(pool_s, wts):
+                sl = round(lines * w / tw * r.uniform(0.6, 1.4))
+                if sl <= 0:
+                    continue
+                sj = round(sl * 0.92)
+                SBB.append([x["id"], x["name"], l[0], n, x["buyer"], max(1, round(sl / r.uniform(1.6, 4.2))), sl, round(val * w / tw, 2), sj, round(sj * x["ontime"])])
             BP.append([l[0], n, pos, lines, val, round(lines * (0.85 if is_corp else 0.35)), 0 if is_corp else round(lines * r.uniform(0.05, 0.3)),
                        judged, round(judged * r.uniform(0.6, 0.85)), stl, vs(stl), cl, vs(cl), dl, vs(dl), nl, vs(nl),
                        round(nsl * r.uniform(0.03, 0.1)), vs(round(nsl * 0.06)), round(stl * r.uniform(0.01, 0.03)), vs(round(stl * 0.02))])
@@ -762,6 +775,7 @@ def build(today: dt.date | None = None, seed: int = 11):
     mod("branch_purchasing", ["location_id", "buyer", "pos", "po_lines", "po_value", "stock_lines", "direct_lines", "lines_judged", "lines_on_time",
                               "stk_then_lines", "stk_then_val", "ns_cust_lines", "ns_cust_val", "ns_demand_lines", "ns_demand_val", "ns_shelf_lines", "ns_shelf_val",
                               "became_stk_lines", "became_stk_val", "dropped_stk_lines", "dropped_stk_val"], BP)
+    mod("supplier_branch_buying", ["supplier_id", "supplier_name", "location_id", "buyer", "supplier_buyer", "pos", "po_lines", "po_value", "lines_judged", "lines_on_time"], SBB)
     mod("branch_nonstock_items", ["location_id", "item_id", "item_desc", "po_lines", "pos", "po_value", "qty", "cust_lines", "demand_lines", "no_demand_lines",
                                   "no_demand_value", "buyers", "last_buyer", "last_po_date", "stocked_now", "sold_lines_180d", "customers_180d"], NSI)
     mod("buyer_activity", ["buyer", "pos", "po_lines", "lines_canceled", "po_value", "suppliers", "locations", "stock_lines", "direct_pos", "lines_judged",
