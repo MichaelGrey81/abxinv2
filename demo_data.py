@@ -732,9 +732,10 @@ def build(today: dt.date | None = None, seed: int = 11):
                    round(judged * ot), round(r.uniform(6, 15), 1), round(lines * r.uniform(0.05, 0.4)), round(lines * r.uniform(0.01, 0.05)),
                    round(lines * r.uniform(0, 0.02)), r.randint(0, 8), iso(today - dt.timedelta(days=r.randint(1, 4))), r.randint(90, 124) if team else r.randint(40, 120)])
     # branch POs by writer: each branch leans on the corporate team to a different degree
-    BP = []
+    BP, NSI = [], []
     for l in branches:
         corp_share = r.uniform(0.15, 0.85)
+        ns_lean = r.uniform(0.15, 0.5)                      # how much of this branch's buying is non-stock
         total = round(r.uniform(1500, 6500) * l[3])
         writers = [(n, True) for n in r.sample(TEAM, r.randint(2, 4))] + [(branch_buyer[l[0]], False)] + [(person(), False) for _ in range(r.randint(0, 2))]
         cw = [w for w in writers if w[1]]; bw = [w for w in writers if not w[1]]
@@ -742,9 +743,27 @@ def build(today: dt.date | None = None, seed: int = 11):
             pool = cw if is_corp else bw
             share = (corp_share if is_corp else 1 - corp_share) / len(pool) * r.uniform(0.6, 1.4)
             lines = max(3, round(total * share)); pos = max(1, round(lines / r.uniform(1.6, 4.2))); judged = round(lines * 0.92)
-            BP.append([l[0], n, pos, lines, round(lines * r.uniform(350, 900), 2), round(lines * (0.85 if is_corp else 0.35)), 0 if is_corp else round(lines * r.uniform(0.05, 0.3)),
-                       judged, round(judged * r.uniform(0.6, 0.85))])
-    mod("branch_purchasing", ["location_id", "buyer", "pos", "po_lines", "po_value", "stock_lines", "direct_lines", "lines_judged", "lines_on_time"], BP)
+            val = round(lines * r.uniform(350, 900), 2)
+            # stocked or not when bought: branch staff lean further into non-stock than the corporate team
+            ns = min(0.9, ns_lean * (0.4 if is_corp else 1.6) * r.uniform(0.8, 1.2))
+            nsl = round(lines * ns); stl = lines - nsl
+            cl = round(nsl * r.uniform(0.35, 0.55)); nl = round(nsl * r.uniform(0.02, 0.08)); dl = nsl - cl - nl
+            vs = lambda k: round(val * k / lines, 2) if lines else 0
+            BP.append([l[0], n, pos, lines, val, round(lines * (0.85 if is_corp else 0.35)), 0 if is_corp else round(lines * r.uniform(0.05, 0.3)),
+                       judged, round(judged * r.uniform(0.6, 0.85)), stl, vs(stl), cl, vs(cl), dl, vs(dl), nl, vs(nl),
+                       round(nsl * r.uniform(0.03, 0.1)), vs(round(nsl * 0.06)), round(stl * r.uniform(0.01, 0.03)), vs(round(stl * 0.02))])
+        for it in r.sample(items, min(len(items), r.randint(40, 90))):
+            pos = r.choice([1, 1, 1, 2, 2, 3, 4, 6]); lines = pos + r.randint(0, 2)
+            why = r.choices(["c", "d", "n", "m"], [0.4, 0.45, 0.05, 0.1])[0]
+            cl = lines if why == "c" else (lines // 2 if why == "m" else 0); nl = lines if why == "n" else 0; dl = lines - cl - nl
+            v = round(it["cost"] * r.randint(2, 40) * lines, 2); sold = 0 if why == "n" else r.randint(1, 30)
+            NSI.append([l[0], it["id"], it["desc"], lines, pos, v, r.randint(2, 40) * lines, cl, dl, nl, v if why == "n" else 0, r.randint(1, 2),
+                        r.choice(writers)[0], iso(today - dt.timedelta(days=r.randint(1, 170))), 1 if r.random() < 0.08 else 0, sold, max(1, sold // 3) if sold else 0])
+    mod("branch_purchasing", ["location_id", "buyer", "pos", "po_lines", "po_value", "stock_lines", "direct_lines", "lines_judged", "lines_on_time",
+                              "stk_then_lines", "stk_then_val", "ns_cust_lines", "ns_cust_val", "ns_demand_lines", "ns_demand_val", "ns_shelf_lines", "ns_shelf_val",
+                              "became_stk_lines", "became_stk_val", "dropped_stk_lines", "dropped_stk_val"], BP)
+    mod("branch_nonstock_items", ["location_id", "item_id", "item_desc", "po_lines", "pos", "po_value", "qty", "cust_lines", "demand_lines", "no_demand_lines",
+                                  "no_demand_value", "buyers", "last_buyer", "last_po_date", "stocked_now", "sold_lines_180d", "customers_180d"], NSI)
     mod("buyer_activity", ["buyer", "pos", "po_lines", "lines_canceled", "po_value", "suppliers", "locations", "stock_lines", "direct_pos", "lines_judged",
                            "lines_on_time", "avg_lead_days", "price_overrides", "qty_changed_lines", "expedited_lines", "keyed_by_other", "last_po_date",
                            "days_with_pos"], BA)

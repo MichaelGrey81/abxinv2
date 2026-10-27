@@ -753,10 +753,13 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
         <div class="card"><h3>Branch score</h3><p class="sub">Line fill 30, stockout rate 30, dead + slow share 20, turns 20. Each scored 0–100 between “needs work” and target. Click a branch for the detail.</p><div class="chartbox" id="brBox" style="height:300px"><canvas id="cBR"></canvas></div></div>
         <div class="card"><div class="tablehead"><h3>Who does the purchasing</h3><span class="sp"></span><span class="seg" id="brMixBy"><button data-v="val" class="on">Dollars</button><button data-v="lines">Lines</button></span></div><p class="sub">Branch POs in the last 180 days by who wrote them: the corporate team (config corp_buyers) or branch staff, ranked by the corporate share of what's shown. Hover for both dollars and lines. Click a branch for its writers.</p><div class="chartbox" id="brMixBox" style="height:300px"><canvas id="cBRmix"></canvas></div></div>
         <div class="card wide"><h3>Performance vs corporate purchasing</h3><p class="sub">Each bubble is a branch: the corporate team’s share of its PO dollars (across) against its score (up). Bigger bubbles sell more. Click a bubble for the detail.</p><div class="chartbox" style="height:360px"><canvas id="cBRscatter"></canvas></div></div>
+        <div class="card wide"><div class="tablehead"><h3>Stocked or not when bought</h3><span class="sp"></span><span class="seg" id="brStkBy"><button data-v="share" class="on">Share of $</button><button data-v="val">Dollars</button><button data-v="lines">Lines</button></span></div>
+          <p class="sub">Branch PO lines in the last 180 days by whether the item was stocked at that branch when the PO was entered, rebuilt from the inv_loc audit trail (stockable, max and purchase class as they were then). Not-stocked buying is split by why: tied to a customer order or direct ship, sold at the branch within 30 days of the PO, or no customer demand seen. Most non-stock first. Click a branch for its non-stock items.</p>
+          <div class="chartbox" id="brStkBox" style="height:300px"><canvas id="cBRstk"></canvas></div></div>
       </div>
       <div class="card">
         <div class="tablehead"><h3>Branch performance</h3><span class="sp"></span><button class="btn sm" id="xBR">Export CSV</button></div>
-        <p class="note">Branches only. Line fill and stockouts are for stocked items over 180 days; dead + slow and turns use today's cost on hand and the last 12 months of COGS. Purchasing is branch POs entered in the last 180 days by the PO's requested-by contact; “On hand bought by corporate” traces each open FIFO layer back to its PO. Grades: A 80+, B 65+, C 50+, D 35+. Use Columns for share of PO dollars, PO on-time and cost on hand.</p>
+        <p class="note">Branches only. Line fill and stockouts are for stocked items over 180 days; dead + slow and turns use today's cost on hand and the last 12 months of COGS. Purchasing is branch POs entered in the last 180 days by the PO's requested-by contact; “On hand bought by corporate” traces each open FIFO layer back to its PO. Grades: A 80+, B 65+, C 50+, D 35+. “Stocked when bought” uses the item-location as it was when the PO was entered (inv_loc audit trail), not as it is today. Use Columns for PO on-time, cost on hand, non-stock dollars and items made stocked later.</p>
         <div class="tablewrap"><table id="tBR"></table></div>
         <div class="tablefoot"><span class="muted" id="fBR"></span><div class="tt-pager"></div></div>
       </div>
@@ -4556,7 +4559,9 @@ const BR_PARTS = [
 function branchData(v){
   const br = new Map();
   locMeta.forEach((m, loc) => { if (m.type === 'BRANCH') br.set(loc, {loc, name:locName(loc), cost:0, ds:0, cogs:0, sales:0, judged:0, filled:0, lines:0, so:0, soLost:0, soNow:0,
-    corpLines:0, brLines:0, otherLines:0, corpVal:0, brVal:0, otherVal:0, corpPos:0, brPos:0, judgedPo:0, onTimePo:0, writers:[], boughtCorp:0, boughtBranch:0, boughtOther:0}); });
+    corpLines:0, brLines:0, otherLines:0, corpVal:0, brVal:0, otherVal:0, corpPos:0, brPos:0, judgedPo:0, onTimePo:0, writers:[], boughtCorp:0, boughtBranch:0, boughtOther:0,
+    hasStk:false, stkVal:0, stkLines:0, nsCustVal:0, nsCustLines:0, nsDemVal:0, nsDemLines:0, nsNoVal:0, nsNoLines:0, becameVal:0, becameLines:0, droppedVal:0, droppedLines:0,
+    corpNsVal:0, brNsVal:0, nsItems:[]}); });
   const B_ = loc => br.get(String(loc));
   v.base.forEach(r => { const a = B_(r.loc); if (!a) return; a.cost += r.cost; if (r.status === 'DEAD' || r.status === 'SLOW') a.ds += r.cost; });
   salesRows.forEach(s => { const a = B_(s.loc); if (!a || !passes(lineRow(s.item, s.loc))) return; a.cogs += s.cogs; a.sales += s.sales; });
@@ -4567,7 +4572,21 @@ function branchData(v){
     const ln = +x.po_lines || 0, val = +x.po_value || 0;
     const f = grp === 'branch' ? 'br' : grp; a[f + 'Lines'] += ln; a[f + 'Val'] += val; if (grp === 'corp') a.corpPos += +x.pos || 0; else if (grp === 'branch') a.brPos += +x.pos || 0;
     a.judgedPo += +x.lines_judged || 0; a.onTimePo += +x.lines_on_time || 0;
-    a.writers.push({name:who, grp, pos:+x.pos || 0, lines:ln, value:val, stockLines:+x.stock_lines || 0, onTime:+x.lines_judged ? +x.lines_on_time / +x.lines_judged : null}); });
+    // stocked or not when the PO was entered (older data has no such columns)
+    const hs = x.stk_then_val != null, nsV = hs ? (+x.ns_cust_val || 0) + (+x.ns_demand_val || 0) + (+x.ns_shelf_val || 0) : null;
+    if (hs) { a.hasStk = true;
+      a.stkVal += +x.stk_then_val || 0; a.stkLines += +x.stk_then_lines || 0; a.nsCustVal += +x.ns_cust_val || 0; a.nsCustLines += +x.ns_cust_lines || 0;
+      a.nsDemVal += +x.ns_demand_val || 0; a.nsDemLines += +x.ns_demand_lines || 0; a.nsNoVal += +x.ns_shelf_val || 0; a.nsNoLines += +x.ns_shelf_lines || 0;
+      a.becameVal += +x.became_stk_val || 0; a.becameLines += +x.became_stk_lines || 0; a.droppedVal += +x.dropped_stk_val || 0; a.droppedLines += +x.dropped_stk_lines || 0;
+      if (grp === 'corp') a.corpNsVal += nsV; else if (grp === 'branch') a.brNsVal += nsV; }
+    a.writers.push({name:who, grp, pos:+x.pos || 0, lines:ln, value:val, stockLines:+x.stock_lines || 0, onTime:+x.lines_judged ? +x.lines_on_time / +x.lines_judged : null,
+      nsVal:nsV, nsShare:hs && val ? nsV / val : null, nsNoVal:hs ? +x.ns_shelf_val || 0 : null}); });
+  (modRows('branch_nonstock_items') || []).forEach(x => { const a = B_(x.location_id); if (!a) return;
+    const lines = +x.po_lines || 0, sold = +x.sold_lines_180d || 0;
+    a.nsItems.push({item:x.item_id, desc:x.item_desc, lines, pos:+x.pos || 0, value:+x.po_value || 0, qty:+x.qty || 0, custLines:+x.cust_lines || 0, demLines:+x.demand_lines || 0,
+      noLines:+x.no_demand_lines || 0, noVal:+x.no_demand_value || 0, buyers:+x.buyers || 0, lastBuyer:x.last_buyer, lastPo:x.last_po_date, stockedNow:+x.stocked_now === 1,
+      sold, customers:+x.customers_180d || 0, why:+x.no_demand_lines === lines ? 'No customer demand' : +x.cust_lines === lines ? 'Customer order' : +x.demand_lines === lines ? 'Sold nearby' : 'Mixed',
+      candidate:+x.pos >= 3 && sold >= 6 && +x.stocked_now !== 1}); });
   if (buyerRows.length) buyerView().forEach(b => { const a = B_(b.r.loc); if (!a) return;
     if (b.dept === 'Purchasing Department') a.boughtCorp += b.cost; else if (b.dept === 'Branch') a.boughtBranch += b.cost; else a.boughtOther += b.cost; });
   const list = [...br.values()].filter(a => a.cost > 0 || a.lines > 0 || a.corpLines + a.brLines > 0).map(a => {
@@ -4576,6 +4595,9 @@ function branchData(v){
       dsPct:a.cost >= 25000 ? a.ds / a.cost : null, turns:a.cost > 0 && a.cogs > 0 ? a.cogs / a.cost : null,
       corpShare:poLines ? a.corpLines / poLines : null, corpValShare:poVal ? a.corpVal / poVal : null, boughtCorpShare:bought ? a.boughtCorp / bought : null,
       poOnTime:a.judgedPo ? a.onTimePo / a.judgedPo : null, nBranchWriters:a.writers.filter(w => w.grp === 'branch').length,
+      nsVal:a.hasStk ? a.nsCustVal + a.nsDemVal + a.nsNoVal : null, nsLines:a.hasStk ? a.nsCustLines + a.nsDemLines + a.nsNoLines : null,
+      stkShare:a.hasStk && poVal ? a.stkVal / poVal : null, nsShare:a.hasStk && poVal ? (a.nsCustVal + a.nsDemVal + a.nsNoVal) / poVal : null,
+      nsNoShare:a.hasStk && poVal ? a.nsNoVal / poVal : null, candidates:a.nsItems.filter(i => i.candidate).length,
       topBranch:a.writers.filter(w => w.grp === 'branch').sort((x, y) => y.lines - x.lines)[0] || null};
     let w = 0, s = 0; o.parts = BR_PARTS.map(p => { const sc = p.f(o[p.k]); if (sc != null) { w += p.w; s += sc * p.w; } return {...p, v:o[p.k], sc}; });
     o.score = w >= 50 ? s / w : null; o.grade = bscGrade(o.score);
@@ -4591,6 +4613,7 @@ function renderBranches(v){
   const list = branchData(v), graded = list.filter(a => a.score != null).sort((x, y) => y.score - x.score);
   const tot = k => sum(list, a => a[k] || 0);
   const corpL = tot('corpLines'), allL = tot('poLines'), corpV = tot('corpVal'), allV = tot('poVal');
+  const hasStk = list.some(a => a.hasStk), nsAll = tot('nsVal');
   // do branches that lean on the corporate team do better? (a comparison, not a cause)
   const hi = graded.filter(a => a.corpValShare != null && a.corpValShare >= 0.5), lo = graded.filter(a => a.corpValShare != null && a.corpValShare < 0.5);
   const avg = l => l.length ? sum(l, a => a.score) / l.length : null;
@@ -4604,11 +4627,13 @@ function renderBranches(v){
     ? `Across ${B(nf(graded.length))} branches, the corporate purchasing team bought ${B(pct(corpV, allV))} of branch PO dollars (${pct(corpL, allL)} of PO lines) in the last 180 days; branch staff wrote the rest${tot('otherLines') ? ' (a few POs have no requester)' : ''}.`
     : 'No branch data for this view.',
     best && worst ? `Best run: ${B(best.name)} (${best.grade.g}, ${Math.round(best.score)}). Most room to improve: ${B(worst.name)} (${worst.grade.g}, ${Math.round(worst.score)})${worst.drag ? `, mostly ${bscLc(worst.drag.label)} at ${worst.drag.show(worst.drag.v)}` : ''}.` : '',
+    hasStk && allV ? `${B(pct(nsAll, allV))} of branch PO dollars (${compact(nsAll)}) went to items that weren't stocked at the branch when the PO was entered. Most of it had a customer behind it: ${compact(tot('nsCustVal'))} tied to a customer order or direct ship and ${compact(tot('nsDemVal'))} on items the branch sold within 30 days of the PO. ${B(compact(tot('nsNoVal')))} (${pct(tot('nsNoVal'), allV)}) had no customer demand seen and is worth a look${tot('candidates') ? `; ${B(nf(tot('candidates')))} non-stock items were bought on 3+ POs and keep selling, so they may be worth stocking` : ''}. Branch staff put ${pct(tot('brNsVal'), tot('brVal'))} of their dollars into non-stock items, the corporate team ${pct(tot('corpNsVal'), corpV)}.` : '',
     hi.length && lo.length ? `Branches where the corporate team buys most of the dollars average ${B(nf(avg(hi)))} vs ${B(nf(avg(lo)))} for branches that mostly buy for themselves${rTxt ? `; across all branches there's ${rTxt} between corporate dollar share and score` : ''}. Branch size, mix and staffing differ, so read this as a pointer, not proof.` : '']);
   $('brStats').innerHTML =
     stat('Branch PO lines, 180 days', nf(allL), `${compact(allV)} · ${nf(tot('corpPos') + tot('brPos'))} POs`) +
     stat('Bought by the corporate team', pct(corpV, allV), `${compact(corpV)} of PO dollars · ${pct(corpL, allL)} of lines (${nf(corpL)})`) +
     stat('Bought by branch staff', pct(tot('brVal'), allV), `${compact(tot('brVal'))} · ${pct(tot('brLines'), allL)} of lines · ${nf(sum(list, a => a.nBranchWriters))} people`) +
+    (hasStk ? stat('Not stocked when bought', pct(nsAll, allV), `${compact(nsAll)} · ${compact(tot('nsNoVal'))} with no customer demand seen`, tot('nsNoVal') / Math.max(1, allV) > 0.05 ? 'warn' : '') : '') +
     stat('Branch line fill', pctTxt0(tot('filled') / Math.max(1, tot('judged'))), `stockout rate ${pctTxt0(tot('so') / Math.max(1, tot('lines')))}`) +
     stat('Stock on hand bought by corporate', pctTxt0(tot('boughtCorp') / Math.max(1, tot('boughtCorp') + tot('boughtBranch') + tot('boughtOther'))), 'branch stock, by the PO behind each FIFO layer');
   chartDefaults();
@@ -4635,6 +4660,7 @@ function renderBranches(v){
       y:{min:0, max:100, title:{display:true, text:'branch score'}}},
       plugins:{legend:{display:false}, tooltip:{callbacks:{title:i => sc[i[0].dataIndex].name, label:c => { const a = sc[c.dataIndex]; return [` Score ${Math.round(a.score)} (${a.grade.g})`, ` Corporate share ${pctTxt0(a.corpValShare)} of $ · ${pctTxt0(a.corpShare)} of lines`, ` Sales ${compact(a.sales)}`]; }}}}}});
   DRILL.cBRscatter = i => openBranch(sc[i], list); TFILT.cBRscatter = DRILL.cBRscatter;
+  renderBranchStock(list, hasStk);
   table('tBR', [
     {k:'rank', h:'Rank', type:'num'}, {k:'name', h:'Branch'}, {k:'score', h:'Grade', get:r => r.score == null ? null : Math.round(r.score), html:bscGradePill, csv:r => r.score == null ? '' : r.grade.g + ' ' + Math.round(r.score)},
     {k:'dragTxt', h:'Biggest drag', get:r => r.drag ? r.drag.label : '', html:r => r.drag ? `${esc(r.drag.label)} <span class="muted">${r.drag.show(r.drag.v)}</span>` : '<span class="muted">–</span>'},
@@ -4642,11 +4668,35 @@ function renderBranches(v){
     {k:'sales', h:'Sales, 12 mo', type:'money'}, {k:'cost', h:'Cost on hand', type:'money'},
     {k:'poVal', h:'PO $', type:'money', title:'Branch PO value, last 180 days'}, {k:'corpValShare', h:'Corporate share of $', type:'pct', title:'Share of PO dollars bought by the corporate team'},
     {k:'poLines', h:'PO lines', type:'num', title:'Branch PO lines, last 180 days'}, {k:'corpShare', h:'Corporate share of lines', type:'pct', title:'Share of PO lines written by the corporate team'}, {k:'boughtCorpShare', h:'On hand bought by corporate', type:'pct', title:'Branch stock on hand by who wrote the PO behind it'},
+    {k:'stkShare', h:'Stocked when bought', type:'pct', title:'Share of PO dollars on items stocked at the branch when the PO was entered'},
+    {k:'nsShare', h:'Not stocked when bought', type:'pct', title:'Share of PO dollars on items not stocked at the branch when the PO was entered'},
+    {k:'nsVal', h:'Non-stock $', type:'money'}, {k:'nsNoVal', h:'Non-stock, no demand $', type:'money', title:'Not stocked when bought, no customer order tied and no sale within 30 days of the PO'},
+    {k:'becameLines', h:'Made stocked later', type:'num', title:'PO lines on items not stocked when bought that are stocked now'}, {k:'candidates', h:'Items to consider stocking', type:'num', title:'Non-stock items bought on 3+ POs that sold 6+ lines in 180 days and still are not stocked'},
     {k:'nBranchWriters', h:'Branch writers', type:'num'}, {k:'topTxt', h:'Top branch writer', get:r => r.topBranch ? r.topBranch.name : '', html:r => r.topBranch ? `${esc(r.topBranch.name)} <span class="muted">${nf(r.topBranch.lines)} lines</span>` : '<span class="muted">–</span>'},
     {k:'poOnTime', h:'PO lines on time', type:'pct'}
-  ], list, {sortKey:'rank', sortDir:1, footId:'fBR', exportId:'xBR', exportName:'branch_performance', hidden:['poOnTime', 'cost'], onRow:r => openBranch(r, list)});
+  ], list, {sortKey:'rank', sortDir:1, footId:'fBR', exportId:'xBR', exportName:'branch_performance', hidden:['poOnTime', 'cost', 'nsVal', 'becameLines'], onRow:r => openBranch(r, list)});
 }
-function openBranch(a, list){
+const BR_STK = [
+  {k:'stk', label:'Stocked when bought', c:'#2a78d6'},
+  {k:'nsCust', label:'Not stocked: customer order', c:'#1baf7a'},
+  {k:'nsDem', label:'Not stocked: sold nearby', c:'#6250d6'},
+  {k:'nsNo', label:'Not stocked: no demand seen', c:'#eb6834'}];
+function renderBranchStock(list, hasStk){
+  const card = $('cBRstk').closest('.card');
+  card.hidden = !hasStk; if (!hasStk) return;
+  const by = S.brStkBy || 'share'; segOn('brStkBy', by);
+  const rows = list.filter(a => a.hasStk && a.poVal).sort((x, y) => (y.nsShare || 0) - (x.nsShare || 0));
+  const val = (a, k) => by === 'share' ? a[k + 'Val'] / a.poVal * 100 : by === 'lines' ? a[k + 'Lines'] : a[k + 'Val'];
+  $('brStkBox').style.height = Math.max(220, rows.length * 28 + 70) + 'px';
+  make('cBRstk', {type:'bar', data:{labels:rows.map(a => a.name), datasets:BR_STK.map(g => ({label:g.label, grp:g.k, data:rows.map(a => val(a, g.k)), backgroundColor:g.c}))},
+    options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
+      scales:{x:{stacked:true, max:by === 'share' ? 100 : undefined, ticks:{callback:x => by === 'share' ? x + '%' : by === 'val' ? compact(x) : nf(x)}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{filter:i => i.raw > 0, callbacks:{
+        label:c => { const a = rows[c.dataIndex], g = c.dataset.grp; return ` ${c.dataset.label}: ${compact(a[g + 'Val'])} (${pct(a[g + 'Val'], a.poVal)} of $) · ${nf(a[g + 'Lines'])} lines`; },
+        footer:i => { const a = rows[i[0].dataIndex]; return a.candidates ? `${nf(a.candidates)} non-stock items to consider stocking` : ''; }}}}}});
+  DRILL.cBRstk = i => openBranch(rows[i], list, 'items'); TFILT.cBRstk = DRILL.cBRstk;
+}
+function openBranch(a, list, view){
   if (!a) return;
   const graded = list.filter(x => x.score != null), med = k => { const v = list.map(x => x[k]).filter(x => x != null && isFinite(x)).sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : null; };
   const notes = [];
@@ -4657,16 +4707,27 @@ function openBranch(a, list){
   }
   if (a.poLines) notes.push(`The corporate team bought ${pctTxt0(a.corpValShare)} of this branch's ${compact(a.poVal)} in POs and wrote ${pctTxt0(a.corpShare)} of its ${nf(a.poLines)} lines (branch median ${pctTxt0(med('corpValShare'))} of dollars); ${nf(a.nBranchWriters)} branch ${a.nBranchWriters === 1 ? 'person wrote' : 'people wrote'} the rest${a.topBranch ? `, most by ${esc(a.topBranch.name)} (${nf(a.topBranch.lines)} lines)` : ''}.`);
   if (a.boughtCorpShare != null) notes.push(`${pctTxt0(a.boughtCorpShare)} of the stock on hand was bought by the corporate team.`);
+  if (a.hasStk && a.poVal) notes.push(`${pctTxt0(a.nsShare)} of its PO dollars (${compact(a.nsVal)}) went to items that weren't stocked here when bought (branch median ${pctTxt0(med('nsShare'))}): ${compact(a.nsCustVal)} for customer orders, ${compact(a.nsDemVal)} on items sold within 30 days, and <b>${compact(a.nsNoVal)}</b> with no customer demand seen.${a.becameLines ? ` ${nf(a.becameLines)} of those lines are on items that have been set up as stocked since.` : ''}${a.droppedLines ? ` ${nf(a.droppedLines)} lines were on items stocked then but not now.` : ''}`);
+  if (a.candidates) notes.push(`${nf(a.candidates)} non-stock ${a.candidates === 1 ? 'item was' : 'items were'} bought on 3 or more POs and sold 6+ lines in 180 days; switch the table to “Non-stock items” and filter Consider stocking to see ${a.candidates === 1 ? 'it' : 'them'}.`);
   if (a.so) notes.push(`${nf(a.so)} stockouts in 180 days (${nf(a.soNow)} out now), about ${compact(a.soLost)} in estimated lost sales.`);
   const ws = a.writers.slice().sort((x, y) => y.value - x.value);
   openDrill({title:a.name, sub:a.score == null ? 'Not enough data to grade' : `Grade ${a.grade.g} · score ${Math.round(a.score)} · #${a.rank} of ${graded.length} branches`,
-    facts:[['Line fill', pctTxt0(a.fill)], ['Stockout rate', pctTxt0(a.soRate)], ['Dead + slow', pctTxt0(a.dsPct)], ['Turns', a.turns == null ? '–' : nf(a.turns, 1) + '×'], ['Corporate share of PO $', pctTxt0(a.corpValShare)], ['Sales, 12 mo', compact(a.sales)]],
+    facts:[['Line fill', pctTxt0(a.fill)], ['Stockout rate', pctTxt0(a.soRate)], ['Dead + slow', pctTxt0(a.dsPct)], ['Turns', a.turns == null ? '–' : nf(a.turns, 1) + '×'], ['Corporate share of PO $', pctTxt0(a.corpValShare)],
+      ...(a.hasStk ? [['Not stocked when bought', pctTxt0(a.nsShare)]] : []), ['Sales, 12 mo', compact(a.sales)]],
     note:'<h4>What stands out</h4><ul>' + notes.map(x => `<li>${x}</li>`).join('') + '</ul>',
     action:{label:'Filter dashboard to this branch', fn:() => { S.loc = a.loc; fillFilters(); resetPaging(); render(); }},
     chart:ws.length ? {title:'Who writes this branch’s POs', sub:'PO dollars, last 180 days · teal = corporate team, orange = branch staff · the table has lines too', cfg:hbarCfg(ws.map(w => w.name), ws.map(w => w.value), ws.map(w => w.grp === 'corp' ? css('--accent') : w.grp === 'branch' ? CAT[1] : css('--s-other')), x => compact(x)), height:Math.max(160, ws.length * 26 + 50)} : null,
-    table:{title:'PO writers', rows:ws.map(w => ({...w, group:w.grp === 'corp' ? 'Corporate team' : w.grp === 'branch' ? 'Branch' : 'No requester', share:a.poLines ? w.lines / a.poLines : null, valShare:a.poVal ? w.value / a.poVal : null})), sortKey:'value', exportName:'branch_writers_' + a.loc,
+    table:{title:'PO writers and non-stock items', rows:ws.map(w => ({...w, group:w.grp === 'corp' ? 'Corporate team' : w.grp === 'branch' ? 'Branch' : 'No requester', share:a.poLines ? w.lines / a.poLines : null, valShare:a.poVal ? w.value / a.poVal : null})), sortKey:'value', exportName:'branch_' + a.loc,
+      onRow:r => { if (r.item) openItem(r.item); },
       cols:[{k:'name', h:'Writer'}, {k:'group', h:'Group', filter:'set'}, {k:'pos', h:'POs', type:'num'}, {k:'lines', h:'PO lines', type:'num'}, {k:'share', h:'Share of lines', type:'pct'},
-            {k:'value', h:'PO value', type:'money'}, {k:'valShare', h:'Share of $', type:'pct'}, {k:'stockLines', h:'Stocked-item lines', type:'num'}, {k:'onTime', h:'On time', type:'pct'}]}});
+            {k:'value', h:'PO value', type:'money'}, {k:'valShare', h:'Share of $', type:'pct'}, ...(a.hasStk ? [{k:'nsShare', h:'Non-stock share of $', type:'pct', title:'Share of this writer’s dollars on items not stocked here when bought'}, {k:'nsNoVal', h:'Non-stock, no demand $', type:'money'}] : []),
+            {k:'stockLines', h:'Stocked-item lines (today)', type:'num'}, {k:'onTime', h:'On time', type:'pct'}],
+      ...(a.nsItems.length ? {view, altLabels:['PO writers', 'Non-stock items'], alt:{rows:a.nsItems, sortKey:'value',
+        cols:[{k:'item', h:'Item'}, {k:'desc', h:'Description', cls:'desc'}, {k:'why', h:'Why bought', filter:'set', title:'Customer order = tied to an order or direct ship; sold nearby = sold within 30 days of the PO; no customer demand = neither'},
+              {k:'pos', h:'POs', type:'num'}, {k:'lines', h:'PO lines', type:'num'}, {k:'value', h:'PO value', type:'money'}, {k:'noVal', h:'No-demand $', type:'money'},
+              {k:'sold', h:'Order lines, 180 days', type:'num'}, {k:'customers', h:'Customers', type:'num'},
+              {k:'stockedTxt', h:'Stocked now', filter:'set', get:r => r.stockedNow ? 'Yes' : 'No'}, {k:'candTxt', h:'Consider stocking', filter:'set', get:r => r.candidate ? 'Yes' : '', title:'Bought on 3+ POs, sold 6+ lines in 180 days, not stocked now'},
+              {k:'lastBuyer', h:'Last bought by'}, {k:'lastPo', h:'Last PO', type:'date'}]}} : {})}});
 }
 
 /* ---- Min / max changes ---- */
@@ -5171,6 +5232,7 @@ $('dohTarget').onchange = e => { S.dohTarget = Math.max(1, +e.target.value || 90
 document.querySelectorAll('#chDim button').forEach(b => b.onclick = () => { S.chDim = b.dataset.v; renderTab(); });
 document.querySelectorAll('#soMode button').forEach(b => b.onclick = () => { S.soMode = b.dataset.v; renderTab(); });
 $('bscShare').onclick = () => openBuyerShare();
+document.querySelectorAll('#brStkBy button').forEach(b => b.onclick = () => { S.brStkBy = b.dataset.v; renderTab(); });
 document.querySelectorAll('#brMixBy button').forEach(b => b.onclick = () => { S.brMixBy = b.dataset.v; renderTab(); });
 document.querySelectorAll('#bscScope button').forEach(b => b.onclick = () => { S.bscScope = b.dataset.v; resetTable('tBSC'); renderTab(); });
 document.querySelectorAll('#ccType button').forEach(b => b.onclick = () => { S.ccType = b.dataset.v; renderTab(); });
