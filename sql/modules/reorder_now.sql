@@ -42,5 +42,5 @@ WHERE il.company_id = @CompanyId
   AND ISNULL(il.purchase_class, '') <> 'NS'
   AND il.inv_min > 0
   AND (il.inv_max > 0 OR @RequireMax = 0)
-  AND il.location_id IN (10000,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
+  AND il.location_id IN (10000,10500,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
   AND il.qty_on_hand - il.qty_allocated + il.qty_in_transit + il.order_quantity <= il.inv_min;

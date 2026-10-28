@@ -40,7 +40,7 @@ DROP TABLE IF EXISTS #ev;
       AND (il.inv_max > 0 OR (@RequireMax = 0 AND il.inv_min > 0))   -- not stocked here (max 0, or no min/max for Up To companies): running out is expected
       AND il.company_id = @CompanyId
       AND ISNULL(il.purchase_class, '') <> 'NS'
-      AND it.location_id IN (10000,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
+      AND it.location_id IN (10000,10500,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
 )
 SELECT inv_mast_uid, location_id,
        date_created                                              AS out_start,

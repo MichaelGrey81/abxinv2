@@ -37,7 +37,7 @@ LEFT JOIN dbo.contacts c ON c.id = ph.requested_by
 LEFT JOIN dbo.users u    ON u.id = ph.created_by
 LEFT JOIN dbo.inv_loc il ON il.inv_mast_uid = pl.inv_mast_uid AND il.location_id = ph.location_id
 WHERE ph.company_no = @CompanyId
-  AND ph.location_id IN (10000,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)   -- branches only: corp DCs and consignment are left out
+  AND ph.location_id IN (10000,10500,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)   -- branches only: corp DCs and consignment are left out
   AND ph.order_date >= @Start
   AND ph.delete_flag = 'N' AND pl.delete_flag = 'N'
   AND pl.qty_ordered > 0;

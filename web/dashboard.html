@@ -176,6 +176,10 @@ button.kpi:hover{border-color:#cfd4dc;box-shadow:0 2px 6px rgba(16,24,40,.08)}
 .bs-svc b{font-size:18px}.bs-svc .muted{font-size:12px}
 .bs-step{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:12px 0}.bs-step h4{margin:0 0 4px;font-size:13.5px}.bs-step ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink2)}.bs-step li{margin:3px 0}
 .bs-risk{border-left-color:var(--s-aging)}
+.bs-mix{font-size:12px;color:var(--muted)}
+.bs-cmps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.bs-cmp{border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 14px}.bs-cmp.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.bs-cmp h4{margin:0 0 6px;font-size:14px}.bs-cmp ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink2)}.bs-cmp li{margin:4px 0}
 td select.bs-supsel,td select.bs-regsel{font:12px var(--font);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 4px}
 .bsc-boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:10px}
 .bsc-board{background:var(--soft);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px}
@@ -428,6 +432,10 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
   header.top{position:static}
 }
 @media (max-width:600px){header.top,main{padding-left:16px;padding-right:16px}select{max-width:none;width:100%}.filters label{width:100%}.form{grid-template-columns:1fr}}
+/* inside Procurement Hub: the hub supplies the header, sign-in, theme and data refresh */
+body.embed .brand,body.embed #btnTheme,body.embed [data-server],body.embed .static-only{display:none!important}
+body.no-mgr .mgr-only{display:none!important}
+body.no-mgr #abGrid{grid-template-columns:1fr}
 @media print{.side,.filters,.hdr-actions,.tablefoot .btn{display:none}.shell{display:block}header.top{position:static}}
 </style>
 <script>try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
@@ -462,6 +470,7 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
       <button data-tab="fill"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>Fill rate</span><span class="count" id="nFR"></span></button>
       <button data-tab="branches"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l4-3 4 3v11"/><path d="M13 21V6l4-3 4 3v15"/></svg><span>Branch performance</span></button>
       <button data-tab="structure"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="9" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-2h14v2M12 12v4"/></svg><span>Buyer structure</span></button>
+      <button data-tab="autobuy"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 12h.01M16 12h.01M9 16h6"/></svg><span>Auto-buy candidates</span></button>
       <button data-tab="breakdown"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg><span>Breakdown</span></button>
     </nav>
     <div class="side-foot" id="sideFoot"></div>
@@ -811,13 +820,17 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
             <label class="bs-chk"><input type="checkbox" id="bsCash"> Leave out Cash Vendor</label></fieldset>
           <fieldset><legend>Regions</legend>
             <label class="bs-ctl"><span>Regional buyers</span><select id="bsRegions"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+            <label class="bs-ctl" title="When there are more seats than people: show the extra seats as new hires, or use fewer, larger regions so everyone you have covers it"><span>If there aren't enough people</span><select id="bsHire"><option value="1">Show new hires</option><option value="0">No new hires: fewer, larger regions</option></select></label>
             <label class="bs-ctl"><span>Group branches by</span><select id="bsGroupBy"><option value="geo">Geography</option><option value="geoBal">Geography, balancing workload</option><option value="suppliers">Shared suppliers</option></select></label>
             <label class="bs-ctl" title="Share of the PO lines branch staff write today that moves to the buying team. The default is the share on items stocked when bought; special orders and non-stock stay at the branch."><span>Branch-staff buying moving to regional buyers <b id="bsMoveV"></b></span><input type="range" id="bsMove" min="0" max="100" step="5"></label>
             <label class="bs-ctl" title="How many PO lines one buyer can handle in 180 days. The default is the median of the buying team today."><span>Capacity per buyer, PO lines per 180 days <b id="bsCapV"></b></span><input type="range" id="bsCap" min="1000" max="20000" step="100"></label></fieldset>
           <fieldset><legend>Who fits where</legend>
+            <label class="bs-ctl" title="A vendor goes to a regional buyer when at least this share of its branch spend is in one region"><span>Regional vendor: share of its spend in one region <b id="bsExclV"></b></span><input type="range" id="bsExcl" min="50" max="100" step="5"></label>
+            <label class="bs-ctl"><span>Vendors spread across regions go to</span><select id="bsCrossTo"><option value="region">The region that buys the most</option><option value="national">The national buyers</option></select></label>
             <label class="bs-ctl"><span>Candidates</span><select id="bsCands"><option value="team">Buying team</option><option value="all">Team + branch buyers</option></select></label>
             <label class="bs-ctl" title="How much it counts that someone already writes these POs or is the P21 buyer for these suppliers"><span>Weight: knows the suppliers and branches <b id="bsWFamV"></b></span><input type="range" id="bsWFam" min="0" max="100" step="5"></label>
             <label class="bs-ctl" title="Buyer scorecard: stockout rate on their suppliers and productivity. Branch buyers use PO on-time instead."><span>Weight: scorecard performance <b id="bsWPerfV"></b></span><input type="range" id="bsWPerf" min="0" max="100" step="5"></label>
+            <label class="bs-ctl" title="Puts the strongest scorecards on the biggest roles and the weakest on the smallest, on top of fit"><span>Strongest buyers on the biggest roles <b id="bsStrongV"></b></span><input type="range" id="bsStrong" min="0" max="100" step="10"></label>
             <label class="bs-ctl" title="How close their current PO lines are to the role’s workload"><span>Weight: handles the volume today <b id="bsWVolV"></b></span><input type="range" id="bsWVol" min="0" max="100" step="5"></label></fieldset>
           <fieldset><legend>Service assumptions</legend>
             <label class="bs-ctl" title="At 100%, a branch-supplier pair takes on the new buyer’s stockout rate in full; at 0%, buyers make no difference"><span>How much stockouts follow the buyer <b id="bsSkillV"></b></span><input type="range" id="bsSkill" min="0" max="100" step="5"></label>
@@ -825,9 +838,10 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
             <label class="bs-ctl" title="A temporary rise while new owners learn their suppliers"><span>Extra stockouts during handover (first 90 days) <b id="bsDipV"></b></span><input type="range" id="bsDip" min="0" max="50" step="5"></label></fieldset>
         </div>
       </div>
+      <div class="card" id="bsHireCard" hidden><h3>With or without a new hire</h3><p class="sub">The same settings, side by side: extra seats as new hires, or fewer, larger regions covered by the people you have.</p><div id="bsHire2"></div></div>
       <div class="card"><h3>What it looks like</h3><p class="sub">Each card is one role: who fits best and why, its workload against capacity, and what it covers. Pick a different person, or rename a region, right on the card.</p><div id="bsOrg"></div></div>
       <div class="grid">
-        <div class="card" id="bsMapCard"><h3>Regions</h3><p class="sub">Branches by location, coloured by region. Move a branch in the Branches table below.</p><div class="chartbox" style="height:340px"><canvas id="cBSmap"></canvas></div></div>
+        <div class="card" id="bsMapCard"><h3>Regions</h3><p class="sub">Branches by location, shaded by region. Move a branch in the Branches table below.</p><div class="chartbox" style="height:360px"><canvas id="cBSmap"></canvas></div></div>
         <div class="card"><h3>Workload by role</h3><p class="sub">PO lines per 180 days: what the buying team writes today plus the branch-staff share moving in. The dashed line is capacity.</p><div class="chartbox" id="bsLoadBox" style="height:300px"><canvas id="cBSload"></canvas></div></div>
       </div>
       <div class="card"><h3>Service impact (estimate)</h3><p class="sub">Each branch-supplier pair's stockouts move toward the new owner's stockout rate on today's scorecard, by the share set in Service assumptions, with extra stockouts for roles over capacity. It shows direction and size; it isn't a forecast.</p><div id="bsSvc"></div>
@@ -835,8 +849,12 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
         <div class="tablewrap"><table id="tBSsvc"></table></div><div class="tablefoot"><span class="muted" id="fBSsvc"></span><div class="tt-pager"></div></div></div>
       <div class="card"><h3>Plan for getting there</h3><p class="sub">Built from the scenario above; it changes as you change the settings.</p><div id="bsPlan"></div></div>
       <div class="card">
+        <div class="tablehead"><h3>Vendor handover: who has them now, who would</h3><span class="sp"></span><button class="btn sm" id="xBShand">Export CSV</button></div>
+        <p class="note">Each person's vendors in P21 today against this plan. Click a person to see their vendors in the Suppliers table below.</p>
+        <div class="tablewrap"><table id="tBShand"></table></div><div class="tablefoot"><span class="muted" id="fBShand"></span><div class="tt-pager"></div></div></div>
+      <div class="card">
         <div class="tablehead"><h3>Suppliers</h3><span class="sp"></span><button class="btn sm" id="xBSsup">Export CSV</button></div>
-        <p class="note">Branch POs, last 180 days. Set Tier to force a supplier national or regional. The export is the supplier reassignment list for P21.</p>
+        <p class="note">Branch POs, last 180 days. Every vendor has one owner, as in P21: national (bought by nearly every branch), regional (most of its spend in one region) or cross-region (spread out; goes where the settings say). Set Tier to force national or regional. The export is the supplier reassignment list for P21.</p>
         <div class="tablewrap"><table id="tBSsup"></table></div><div class="tablefoot"><span class="muted" id="fBSsup"></span><div class="tt-pager"></div></div></div>
       <div class="grid">
         <div class="card"><div class="tablehead"><h3>Branches</h3><span class="sp"></span><button class="btn sm" id="xBSbr">Export CSV</button></div>
@@ -844,6 +862,45 @@ button.kpi,.opp{transition:border-color .15s,box-shadow .15s,transform .15s,opac
         <div class="card"><div class="tablehead"><h3>Fit by role</h3><span class="sp"></span><button class="btn sm" id="xBSfit">Export CSV</button></div>
           <p class="note">Every candidate against every role, 0–100. Bold is the person in that seat.</p><div class="tablewrap"><table id="tBSfit"></table></div><div class="tablefoot"><span class="muted" id="fBSfit"></span><div class="tt-pager"></div></div></div>
       </div>
+      </div>
+    </section>
+    <section data-panel="autobuy" hidden>
+      <div class="card story" id="st_ab"></div>
+      <div id="abNotice"></div>
+      <div id="abBody">
+      <div class="opps stats" id="abStats"></div>
+      <div class="card">
+        <div class="tablehead"><h3>What-if settings</h3><span class="sp"></span><button class="btn sm" id="abReset">Reset to defaults</button></div>
+        <p class="sub">An auto-buy vendor is one where a requirement can become a placed, confirmed PO with no one touching it. Scored on: no prepaid-freight target 25, how POs reach them 20 (EDI best), stock replenishment 15, how rarely POs get touched 15, on time 15, steady lead time 10. Last 12 months of POs.</p>
+        <div class="bs-ctls">
+          <fieldset><legend>Which vendors qualify</legend>
+            <label class="bs-ctl" title="Vendors scoring at least this, and passing the rules below, are Ready now"><span>Score needed <b id="abMinScoreV"></b></span><input type="range" id="abMinScore" min="40" max="95" step="5"></label>
+            <label class="bs-ctl" title="A freight threshold means someone has to build orders up to it, so most of the vendor’s lines should be at locations without one"><span>Lines with no prepaid-freight target, at least <b id="abNoFreightV"></b></span><input type="range" id="abNoFreight" min="0" max="100" step="5"></label>
+            <label class="bs-ctl" title="Special orders need a person; mostly-special-order vendors are left out"><span>Customer-order or direct-ship lines, at most <b id="abMaxOrderV"></b></span><input type="range" id="abMaxOrder" min="0" max="100" step="5"></label>
+            <label class="bs-ctl" title="Too few lines is not worth setting up"><span>Lines a year, at least <b id="abMinLinesV"></b></span><input type="range" id="abMinLines" min="0" max="200" step="4"></label></fieldset>
+          <fieldset class="mgr-only"><legend>Workload</legend>
+            <label class="bs-ctl" title="Exceptions (price changes, backorders, substitutions) still need a person; set this from a pilot"><span>Share of an auto-buy vendor’s lines the agent handles alone <b id="abAutoShareV"></b></span><input type="range" id="abAutoShare" min="0" max="100" step="5"></label>
+            <label class="bs-ctl" title="The default is the average of the busier half of the buying team over the last 12 months"><span>PO lines one full-time buyer handles a year <b id="abCapV"></b></span><input type="range" id="abCap" min="4000" max="30000" step="500"></label>
+            <label class="bs-chk"><input type="checkbox" id="abAllLocs"> Include DC and consignment POs</label></fieldset>
+          <fieldset class="mgr-only"><legend>Headcount</legend>
+            <label class="bs-ctl"><span>Who counts</span><select id="abScope"><option value="team">Buying team</option><option value="all">Buying team + branch writers</option></select></label>
+            <label class="bs-ctl"><span>If positions free up, pick by</span><select id="abPickBy"><option value="load">Least work left after automation</option><option value="score">Lowest scorecard</option></select></label>
+            <p class="muted" style="font-size:12px;margin:6px 0 0">Purchasing managers (config: managers) are never counted.</p></fieldset>
+        </div>
+      </div>
+      <div class="grid" id="abGrid">
+        <div class="card"><h3>Biggest wins</h3><p class="sub">Vendors that qualify or nearly do, by PO lines a year. Green = ready now, blue = almost, amber = needs a freight change. Click one for its branches and who buys it.</p><div class="chartbox" id="abTopBox" style="height:300px"><canvas id="cABtop"></canvas></div></div>
+        <div class="card mgr-only"><h3>Workload by person</h3><p class="sub">PO lines a year: what's left, and what the auto-buyer would take. Teal = buying team, orange = branch staff. The dashed line is one full-time buyer. Click a person for their vendors.</p><div class="chartbox" id="abPeopleBox" style="height:300px"><canvas id="cABpeople"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="tablehead"><h3>Auto-buy candidates</h3><span class="sp"></span><button class="btn sm" id="xAB">Export CSV</button></div>
+        <p class="note">Every vendor bought in the last 12 months, best candidates first. Click a vendor for its locations, freight targets and who buys it now. Use Columns for lines per PO, lead time and the P21 buyer.</p>
+        <div class="tablewrap"><table id="tAB"></table></div><div class="tablefoot"><span class="muted" id="fAB"></span><div class="tt-pager"></div></div></div>
+      <div class="card mgr-only">
+        <div class="tablehead"><h3>Everyone who writes POs: yearly workload</h3><span class="sp"></span><button class="btn sm" id="xABp">Export CSV</button></div>
+        <p class="note">PO lines in the last 12 months by the PO's requested-by person, and what auto-buying the ready vendors would take off. Full-time = lines ÷ the lines one buyer handles a year.</p>
+        <div class="tablewrap"><table id="tABp"></table></div><div class="tablefoot"><span class="muted" id="fABp"></span><div class="tt-pager"></div></div></div>
+      <div class="card mgr-only"><h3>Headcount</h3><p class="sub">If the remaining work fits in fewer full-time buyers, how many positions could be absorbed, by whom, and where their vendors would go.</p><div id="abHead"></div></div>
       </div>
     </section>
     <section data-panel="minmax" hidden>
@@ -1378,11 +1435,36 @@ const DEPTS = ['Purchasing Department', 'Branch', 'Non-PO/Trace'];
 const S = {loc:'ALL', type:'ALL', group:'ALL', supplier:'ALL', abc:'ALL', dept:'ALL', buyer:'ALL', q:'', on:new Set(STATUS.map(s => s.key)),
            tab:lsGet('tab','overview'), cover:lsGet('cover',3), target:lsGet('target',6), noUsage:false, dim:'supplier', exBasis:'mos'};
 const T = {};   // per-table sort/paging state
-const TABS = ['overview','items','transfers','excess','layers','onorder','returns','suppliers','vendors','buyers','minmax','costs','change','turns','doh','service','stockouts','breakdown'];
-const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Buyer scorecard', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', branches:'Branch performance', structure:'Buyer structure', minmax:'Min/max changes', costs:'Cost changes'};
+const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Buyer scorecard', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', branches:'Branch performance', structure:'Buyer structure', autobuy:'Auto-buy candidates', minmax:'Min/max changes', costs:'Cost changes'};
+const TABS = Object.keys(TITLES);   // every tab with a title can be linked to (#structure) and restored on reload
 const history_replace = h => { try { window.history.replaceState(null, '', h); } catch {} };
 if (TABS.includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
 if (!TABS.includes(S.tab)) S.tab = 'overview';
+/* Inside Procurement Hub each hub view shows one section of tabs, and data comes through the hub's signed-in API (IH_BRIDGE on the parent page).
+   A link to a tab in another section asks the hub to switch views; the hub then calls IH.setSection. */
+const EMBED = (() => { try { return (window.parent !== window && window.parent.IH_BRIDGE) || null; } catch { return null; } })();
+const SECTIONS = {
+  inventory:['overview', 'items', 'transfers', 'excess', 'layers', 'onorder', 'returns', 'minmax', 'costs', 'change', 'turns', 'doh', 'service', 'stockouts', 'fill', 'branches', 'breakdown'],
+  suppliers:['scorecard', 'suppliers', 'vendors', 'autobuy'],
+  team:['buyers', 'structure', 'autobuy']};
+const MGR_ONLY = {team:['structure', 'autobuy']};   // these name people and estimate headcount: purchasing managers only
+let SEC = null, PENDING_TAB = null;
+const isMgrView = () => !EMBED || !!(LIVE_APP && LIVE_APP.viewer && LIVE_APP.viewer.manager);
+const secTabs = sec => (SECTIONS[sec] || []).filter(t => isMgrView() || !(MGR_ONLY[sec] || []).includes(t));
+function applySection(sec, tab){
+  SEC = SECTIONS[sec] ? sec : 'inventory';
+  const ok = secTabs(SEC);
+  let label = null, any = false;
+  [...$('tabs').children].forEach(el => {
+    if (el.classList.contains('nav-label')) { if (label) label.hidden = !any; label = el; any = false; }
+    else { el.hidden = !ok.includes(el.dataset.tab); any = any || !el.hidden; }
+  });
+  if (label) label.hidden = !any;
+  document.body.classList.toggle('no-mgr', !isMgrView());
+  const pick = [tab, PENDING_TAB, lsGet('tab.' + SEC), S.tab].find(t => ok.includes(t)) || ok[0];
+  PENDING_TAB = null; S.tab = pick;
+  if (P) setTab(pick);
+}
 
 /* ================= data load ================= */
 let APP_TITLE = 'Inventory Health';
@@ -1628,11 +1710,16 @@ function render(){
 function renderTab(){
   const v = views();
   const _v = v;
-  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, branches:renderBranches, structure:renderBuyerStructure, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
+  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, branches:renderBranches, structure:renderBuyerStructure, autobuy:renderAutoBuy, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
   try { (SUM[S.tab] || (() => {}))(_v); } catch (ex) { console.warn('summary', ex); }
 }
 function setTab(t){
-  S.tab = t; lsSet('tab', t);
+  if (EMBED && SEC && !secTabs(SEC).includes(t)) {
+    const to = Object.keys(SECTIONS).find(x => secTabs(x).includes(t));
+    if (to) { PENDING_TAB = t; EMBED.open(to); }
+    return;
+  }
+  S.tab = t; lsSet(EMBED ? 'tab.' + SEC : 'tab', t);
   if (location.hash !== '#' + t) history_replace('#' + t);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== t);
@@ -4854,12 +4941,26 @@ const BS_GEO = {'dallas':[32.78,-96.8], 'fort worth':[32.76,-97.33], 'houston':[
   'denver':[39.74,-104.99], 'albuquerque':[35.08,-106.65], 'kansas city':[39.1,-94.58], 'omaha':[41.26,-95.93], 'chicago':[41.88,-87.63], 'indianapolis':[39.77,-86.16],
   'columbus':[39.96,-83.0], 'louisville':[38.25,-85.76], 'nashville':[36.16,-86.78], 'memphis':[35.15,-90.05], 'atlanta':[33.75,-84.39], 'charlotte':[35.23,-80.84],
   'richmond':[37.54,-77.44], 'jacksonville':[30.33,-81.66], 'orlando':[28.54,-81.38], 'tampa':[27.95,-82.46], 'miami':[25.76,-80.19]};
-const BS_DEF = {natMin:null, natSpend:0, natBuyers:2, regions:4, groupBy:'geoBal', move:null, cap:null, cands:'team', wFam:40, wPerf:40, wVol:20,
+const BS_DEF = {natMin:null, natSpend:0, natBuyers:2, regions:4, groupBy:'geoBal', move:null, cap:null, cands:'team', wFam:40, wPerf:40, wVol:20, hire:true, excl:80, crossTo:'region', strong:50,
   skill:50, overload:5, dip:10, excludeCash:true, regionOf:{}, roleWho:{}, supRole:{}, regionName:{}};
 let BS = Object.assign({}, BS_DEF, lsGet('bs', {}));
+let LIVE_APP = null;   // [app]/[purchasing] settings from the running server, newer than the cached data's copy
 const bsSave = () => lsSet('bs', BS);
 const BS_REGION_C = [CAT[0], CAT[1], CAT[2], CAT[5], CAT[4]];
 
+// lower-48 outline (lon, lat), simplified, for the regions map
+const BS_US = [[-124.7,48.4],[-123.1,49],[-95.2,49],[-94.8,49.4],[-89.6,48],[-84.8,46.9],[-84.1,46.5],[-82.4,45.3],[-82.5,43],[-79.2,43.4],[-76.5,44.2],[-75,45],[-71.5,45],[-70,46.7],[-69.2,47.4],[-67.8,47.1],[-67,44.9],
+  [-70.6,43.1],[-70,41.8],[-71.9,41.3],[-74,40.6],[-74.1,39.2],[-75.5,38.4],[-76,37],[-75.5,35.5],[-77,34.6],[-79,33.6],[-80.9,32],[-81.4,30.7],[-80,26.7],[-80.4,25.2],[-81.8,26.1],[-82.7,27.8],[-82.8,29.2],[-84,30.1],
+  [-85.4,29.7],[-86.5,30.4],[-88.5,30.4],[-89.6,30.2],[-89.4,29],[-90.5,29.1],[-92,29.6],[-93.8,29.7],[-94.8,29.3],[-96.8,28.2],[-97.4,27.4],[-97.2,25.9],[-99.1,26.4],[-100.3,28],[-101.4,29.8],[-102.9,29.2],
+  [-104.5,29.6],[-106.5,31.8],[-108.2,31.3],[-111.1,31.3],[-114.8,32.5],[-117.1,32.5],[-117.3,33.2],[-118.5,34],[-120.6,34.6],[-121.9,36.6],[-122.5,37.8],[-123.7,38.9],[-124.2,40.4],[-124.2,42],[-124.5,43.5],[-123.9,46.2]];
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+function bsHull(pts){   // convex hull (monotone chain) of pixel points
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); if (p.length < 3) return p;
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], up = [];
+  p.forEach(q => { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); });
+  p.slice().reverse().forEach(q => { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); });
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
 function bsGeo(name){ const n = String(name || '').toLowerCase(); const k = Object.keys(BS_GEO).find(c => n === c || n.includes(c)); return k ? BS_GEO[k] : null; }
 function bsRegionName(cs){   // a plain-English name from where the region sits
   const lat = sum(cs, c => c[0]) / cs.length, lon = sum(cs, c => c[1]) / cs.length;
@@ -4882,12 +4983,13 @@ function bsHungarian(cost){
   const out = Array(n); for (let j = 1; j <= n; j++) out[p[j] - 1] = j - 1; return out;   // row -> column
 }
 
-function bsModel(){
+function bsModel(opt = {}){
+  const C = Object.assign({}, BS, opt);
   const isBranch = loc => (locMeta.get(String(loc)) || {}).type === 'BRANCH';
   const raw = (modRows('supplier_branch_buying') || []).filter(r => isBranch(r.location_id));
   if (!raw.length) return null;
   const cash = n => /cash vendor/i.test(n || '');
-  const rows = raw.filter(r => !(BS.excludeCash && cash(r.supplier_name)));
+  const rows = raw.filter(r => !(C.excludeCash && cash(r.supplier_name)));
   const branches = [...new Set(rows.map(r => String(r.location_id)))].sort((a, b) => locName(a).localeCompare(locName(b)));
   const nB = branches.length;
   // pairs: branch x supplier, split into lines written by the buying team and by branch staff
@@ -4898,9 +5000,10 @@ function bsModel(){
     const ln = +r.po_lines || 0, val = +r.po_value || 0;
     if (t) { p.teamL += ln; p.teamV += val; } else { p.staffL += ln; p.staffV += val; }
     if (t) p.by.set(bscKey(r.buyer), (p.by.get(bscKey(r.buyer)) || 0) + ln);
-    const s = sup.get(sid) || sup.set(sid, {sid, name:r.supplier_name, owner:r.supplier_buyer || '', locs:new Set(), lines:0, val:0, teamL:0, staffL:0}).get(sid);
+    const s = sup.get(sid) || sup.set(sid, {sid, name:r.supplier_name, owner:r.supplier_buyer || '', locs:new Set(), lines:0, val:0, teamL:0, staffL:0, pairs:[]}).get(sid);
     s.locs.add(loc); s.lines += ln; s.val += val; if (t) s.teamL += ln; else s.staffL += ln;
   });
+  pair.forEach(p => sup.get(p.sid).pairs.push(p));
   // defaults that depend on the data
   const bp = modRows('branch_purchasing') || [];
   const staffStk = bp.filter(b => !team(b.buyer) && b.stk_then_lines != null);
@@ -4908,37 +5011,38 @@ function bsModel(){
   const allP = buyerScoreData().filter(a => a.lines > 0), scored = bscScore(allP.filter(a => a.team)).concat(allP.filter(a => !a.team).map(a => ({...a, score:null, grade:null})));
   const teamPeople = scored.filter(a => a.team && a.lines >= 500).map(a => a.lines).sort((x, y) => x - y);
   const busy = teamPeople.slice(Math.floor(teamPeople.length / 2)), capDef = busy.length ? Math.round(sum(busy, x => x) / busy.length / 100) * 100 : 5000;
-  const natMin = BS.natMin == null ? Math.max(2, Math.ceil(nB * 0.85)) : Math.min(nB, BS.natMin);
-  const move = (BS.move == null ? moveDef : BS.move) / 100, cap = BS.cap == null ? capDef : BS.cap;
+  const natMin = C.natMin == null ? Math.max(2, Math.ceil(nB * 0.85)) : Math.min(nB, C.natMin);
+  const move = (C.move == null ? moveDef : C.move) / 100, cap = C.cap == null ? capDef : C.cap;
   const load = p => p.teamL + move * p.staffL;
+  const pv = p => p.teamV + p.staffV || 0.01 * (p.teamL + p.staffL);   // spend, or lines when a pair has no value
+  // people: purchasing managers (config [purchasing] managers) lead the team and never take a buying seat
+  const appCfg = Object.assign({}, P && P.app, LIVE_APP || {}), mgrList = (Array.isArray(appCfg.managers) ? appCfg.managers : []).map(x => String(x).toUpperCase());
+  const isMgr = a => mgrList.some(f => a.name.toUpperCase().includes(f));
+  const managers = scored.filter(a => isMgr(a));
+  const people = scored.filter(a => !isMgr(a) && (C.cands === 'all' ? a.lines >= 200 : a.team));
+  // how many seats: with no new hires, fewer (larger) regions so every seat has a person
+  let nN = Math.max(1, Math.min(3, C.natBuyers)), rN = Math.max(1, Math.min(6, C.regions, nB));
+  const asked = {nat:nN, reg:rN};
+  if (!C.hire && people.length) { if (nN + rN > people.length) rN = Math.max(1, people.length - nN); if (nN + rN > people.length) nN = Math.max(1, people.length - rN); }
   // national suppliers
   const sups = [...sup.values()].map(s => ({...s, cover:s.locs.size}));
-  sups.forEach(s => { const pin = BS.supRole[s.sid]; s.auto = s.cover >= natMin && s.val >= BS.natSpend; s.national = pin ? pin === 'nat' : s.auto; });
+  sups.forEach(s => { const pin = C.supRole[s.sid]; s.auto = s.cover >= natMin && s.val >= C.natSpend; s.national = pin ? pin === 'nat' : s.auto; });
   const nat = sups.filter(s => s.national), natSet = new Set(nat.map(s => s.sid));
-  // national buyers: balance lines, biggest suppliers first
-  const nN = Math.max(1, Math.min(3, BS.natBuyers)), natBins = Array.from({length:nN}, (_, i) => ({i, L:0, sids:[]}));
-  nat.map(s => ({s, L:sum([...s.locs], l => load(pair.get(l + '|' + s.sid)))})).sort((a, b) => b.L - a.L)
-    .forEach(x => { const b = natBins.slice().sort((p, q) => p.L - q.L)[0]; b.L += x.L; b.sids.push(x.s.sid); x.s.natBin = b.i; });
-  const natBinOf = new Map(nat.map(s => [s.sid, s.natBin]));
-  // regions
-  const rN = Math.max(1, Math.min(6, BS.regions, nB));
+  // regions (branch groups); load used for balancing = regional work at that branch
   const regL = loc => sum([...pair.values()].filter(p => p.loc === loc && !natSet.has(p.sid)), load);
-  const vec = new Map(branches.map(l => [l, new Map([...pair.values()].filter(p => p.loc === l && !natSet.has(p.sid)).map(p => [p.sid, p.teamV + p.staffV]))]));
+  const vec = new Map(branches.map(l => [l, new Map([...pair.values()].filter(p => p.loc === l && !natSet.has(p.sid)).map(p => [p.sid, pv(p)]))]));
   const cos = (a, b) => { let d = 0, na = 0, nb = 0; a.forEach((v, k) => { na += v * v; if (b.has(k)) d += v * b.get(k); }); b.forEach(v => nb += v * v); return na && nb ? d / Math.sqrt(na * nb) : 0; };
   let assign = new Map();
   const geo = new Map(branches.map(l => [l, bsGeo(locName(l).replace(/\s*\(\d+\)$/, '')) || bsGeo((locMeta.get(l) || {}).name)]));
-  if (BS.groupBy !== 'suppliers' && branches.filter(l => geo.get(l)).length >= rN) {
+  function dist(a, c){ return Math.hypot(a[0] - c[0], (a[1] - c[1]) * Math.cos(a[0] * Math.PI / 180)); }
+  if (C.groupBy !== 'suppliers' && branches.filter(l => geo.get(l)).length >= rN) {
     const pts = branches.filter(l => geo.get(l));
-    function dist(a, c){ return Math.hypot(a[0] - c[0], (a[1] - c[1]) * Math.cos(a[0] * Math.PI / 180)); }
-    // k-means on coordinates from every possible first seed (then farthest points); keep the grouping that is compact,
-    // has no one-branch regions, and (when balancing) spreads the work most evenly
+    // k-means on coordinates from every set of starting branches when affordable; keep the grouping that is compact,
+    // has no one-branch regions and (when balancing) spreads the work most evenly
     const centOf = (as, i) => { const m = pts.filter(l => as.get(l) === i); return m.length ? [sum(m, l => geo.get(l)[0]) / m.length, sum(m, l => geo.get(l)[1]) / m.length] : null; };
     const kmeans = seeds => {
       let cents = seeds.map(l => geo.get(l)), as = new Map();
-      for (let it = 0; it < 30; it++) {
-        pts.forEach(l => as.set(l, cents.map((c, i) => [i, dist(geo.get(l), c)]).sort((a, b) => a[1] - b[1])[0][0]));
-        cents = cents.map((c, i) => centOf(as, i) || c);
-      }
+      for (let it = 0; it < 30; it++) { pts.forEach(l => as.set(l, cents.map((c, i) => [i, dist(geo.get(l), c)]).sort((a, b) => a[1] - b[1])[0][0])); cents = cents.map((c, i) => centOf(as, i) || c); }
       return {as, cents};
     };
     const spanAll = Math.max(1e-6, sum(pts, l => sum(pts, x => dist(geo.get(l), geo.get(x)))) / (pts.length * pts.length));
@@ -4947,27 +5051,25 @@ function bsModel(){
       const mean = sum(loads, x => x) / rN, sd = Math.sqrt(sum(loads, x => (x - mean) ** 2) / rN);
       const compact = sum(pts, l => dist(geo.get(l), cents[as.get(l)])) / pts.length / spanAll;
       const singles = pts.length >= 2 * rN ? sizes.filter(n => n === 1).length : 0, empty = sizes.filter(n => !n).length;
-      return compact + (BS.groupBy === 'geoBal' ? 0.6 * (mean ? sd / mean : 0) : 0) + singles + 5 * empty;
+      return compact + (C.groupBy === 'geoBal' ? 0.6 * (mean ? sd / mean : 0) : 0) + singles + 5 * empty;
     };
-    let best = null;
-    // every set of starting branches when that's affordable (14 branches, 4 regions = 1,001 runs), otherwise farthest-point seeds from each branch
     const combos = [], nC = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return r; };
     if (nC(pts.length, rN) <= 4000) { const rec = (st, acc) => { if (acc.length === rN) { combos.push(acc.slice()); return; } for (let i = st; i < pts.length; i++) { acc.push(pts[i]); rec(i + 1, acc); acc.pop(); } }; rec(0, []); }
     else pts.forEach(f => { const sd = [f]; while (sd.length < rN) sd.push(pts.slice().sort((a, b) => Math.min(...sd.map(c => dist(geo.get(b), geo.get(c)))) - Math.min(...sd.map(c => dist(geo.get(a), geo.get(c)))))[0]); combos.push(sd); });
+    let best = null;
     combos.forEach(sd => { const k = kmeans(sd), sc = scoreOf(k); if (!best || sc < best.sc - 1e-9) best = {...k, sc}; });
     assign = best.as; let cents = best.cents;
-    if (BS.groupBy === 'geoBal') {
-      // then move edge branches from the busiest region to a neighbour while it evens out the work
+    if (C.groupBy === 'geoBal') {   // move edge branches from the busiest region to a neighbour while it evens out the work
       for (let it = 0; it < 40; it++) {
         const loads = cents.map((_, i) => sum(pts.filter(l => assign.get(l) === i), regL)), hi = loads.indexOf(Math.max(...loads));
         const cand = pts.filter(l => assign.get(l) === hi).flatMap(l => cents.map((c, j) => ({l, j, d:dist(geo.get(l), c) / Math.max(1e-6, dist(geo.get(l), cents[hi]))})).filter(x => x.j !== hi && x.d < 1.8))
           .map(x => { const L = loads.slice(); L[hi] -= regL(x.l); L[x.j] += regL(x.l); return {...x, spread:Math.max(...L) - Math.min(...L)}; })
-          .filter(x => pts.filter(l => assign.get(l) === hi).length > 1).sort((a, b) => a.spread - b.spread)[0];
+          .filter(x => pts.filter(l => assign.get(l) === hi).length > 2).sort((a, b) => a.spread - b.spread)[0];
         if (!cand || cand.spread >= Math.max(...loads) - Math.min(...loads)) break;
         assign.set(cand.l, cand.j);
       }
     }
-    branches.filter(l => !geo.get(l)).forEach(l => { let best = 0, bs = -1; for (let i = 0; i < rN; i++) { const s = sum(pts.filter(x => assign.get(x) === i), x => cos(vec.get(l), vec.get(x))); if (s > bs) { bs = s; best = i; } } assign.set(l, best); });
+    branches.filter(l => !geo.get(l)).forEach(l => { let bi = 0, bs = -1; for (let i = 0; i < rN; i++) { const s = sum(pts.filter(x => assign.get(x) === i), x => cos(vec.get(l), vec.get(x))); if (s > bs) { bs = s; bi = i; } } assign.set(l, bi); });
   } else {   // shared suppliers: average-linkage clustering on regional supplier spend
     let cl = branches.map(l => [l]);
     while (cl.length > rN) { let bi = 0, bj = 1, bv = -1;
@@ -4978,72 +5080,98 @@ function bsModel(){
   // regions: numbered west to east, then any branches moved by hand, then named from where they sit
   const lonOf = locs => { const cs = locs.map(l => geo.get(l)).filter(Boolean); return cs.length ? sum(cs, c => c[1]) / cs.length : 0; };
   let regs = Array.from({length:rN}, (_, i) => branches.filter(l => assign.get(l) === i)).filter(x => x.length).sort((a, b) => lonOf(a) - lonOf(b)).map((locs, ix) => ({ix, locs}));
-  branches.forEach(l => { const o = BS.regionOf[l]; if (o == null || !regs[o]) return; regs.forEach(r => r.locs = r.locs.filter(x => x !== l)); regs[o].locs.push(l); });
+  if (rN === C.regions) branches.forEach(l => { const o = C.regionOf[l]; if (o == null || !regs[o]) return; regs.forEach(r => r.locs = r.locs.filter(x => x !== l)); regs[o].locs.push(l); });
   regs = regs.filter(r => r.locs.length);
   regs.forEach(r => { const cs = r.locs.map(l => geo.get(l)).filter(Boolean); r.auto = cs.length ? bsRegionName(cs) : 'Region ' + (r.ix + 1); });
   const seen = {}; regs.forEach(r => { seen[r.auto] = (seen[r.auto] || 0) + 1; });
-  regs.forEach(r => { if (seen[r.auto] > 1) { const anchor = r.locs.slice().sort((x, y) => regL(y) - regL(x))[0]; r.auto += ' (' + locName(anchor).replace(/\s*\(\d+\)$/, '') + ')'; } r.name = BS.regionName[r.ix] || r.auto; r.c = BS_REGION_C[r.ix % BS_REGION_C.length]; });
+  regs.forEach(r => { if (seen[r.auto] > 1) { const anchor = r.locs.slice().sort((x, y) => regL(y) - regL(x))[0]; r.auto += ' (' + locName(anchor).replace(/\s*\(\d+\)$/, '') + ')'; }
+    r.name = (rN === C.regions && C.regionName[r.ix]) || r.auto; r.c = BS_REGION_C[r.ix % BS_REGION_C.length]; });
   const regOf = new Map(); regs.forEach(r => r.locs.forEach(l => regOf.set(l, r)));
-  // roles and their workload
-  const roles = natBins.map((b, i) => ({id:'nat' + i, kind:'nat', title:nN > 1 ? `National buyer ${i + 1}` : 'National buyer', sids:new Set(b.sids), locs:branches.slice(), c:css('--accent')}))
+  // every supplier gets one owner (P21 has one buyer per supplier):
+  //   national = bought by nearly every branch; regional = most of its spend is in one region;
+  //   cross-region = the rest, owned by the region that buys the most (or by the national buyers)
+  sups.forEach(s => {
+    const byR = new Map(); s.pairs.forEach(p => { const r = regOf.get(p.loc); if (r) byR.set(r, (byR.get(r) || 0) + pv(p)); });
+    const tot = sum([...byR.values()], x => x), top = [...byR.entries()].sort((a, b) => b[1] - a[1])[0];
+    s.topRegion = top ? top[0] : null; s.regShare = top && tot ? top[1] / tot : null; s.nRegions = byR.size;
+    s.kind = s.national ? 'National' : C.supRole[s.sid] === 'reg' || (s.regShare != null && s.regShare >= C.excl / 100) ? 'Regional' : 'Cross-region';
+  });
+  const natBins = Array.from({length:nN}, (_, i) => ({i, L:0, sids:[]}));
+  const toNat = sups.filter(s => s.kind === 'National' || (s.kind === 'Cross-region' && C.crossTo === 'national'));
+  toNat.map(s => ({s, L:sum(s.pairs, load)})).sort((a, b) => b.L - a.L)
+    .forEach(x => { const b = natBins.slice().sort((p, q) => p.L - q.L)[0]; b.L += x.L; b.sids.push(x.s.sid); x.s.natBin = b.i; });
+  const roles = natBins.map((b, i) => ({id:'nat' + i, kind:'nat', title:nN > 1 ? `National buyer ${i + 1}` : 'National buyer', locs:branches.slice(), c:css('--accent')}))
     .concat(regs.map(r => ({id:'reg' + r.ix, kind:'reg', title:`${r.name} buyer`, region:r, locs:r.locs, c:r.c})));
-  const roleOf = p => natSet.has(p.sid) ? roles[natBinOf.get(p.sid) || 0] : roles.find(r => r.kind === 'reg' && r.region === regOf.get(p.loc));
-  roles.forEach(r => Object.assign(r, {L:0, teamL:0, staffL:0, V:0, sidsAll:new Set(), by:new Map(), own:new Map()}));
-  pair.forEach(p => { const r = roleOf(p); if (!r) return; p.role = r; r.L += load(p); r.teamL += p.teamL; r.staffL += p.staffL; r.V += p.teamV + p.staffV; r.sidsAll.add(p.sid); p.by.forEach((n, k) => r.by.set(k, (r.by.get(k) || 0) + n));
-    const ok = bscKey(sup.get(p.sid).owner); if (ok) r.own.set(ok, (r.own.get(ok) || 0) + p.teamV + p.staffV); });
-  roles.forEach(r => { r.util = cap ? r.L / cap : null; r.nSup = r.sidsAll.size; });
-  // who could fill each role, and how well they fit
-  const people = scored.filter(a => BS.cands === 'all' ? a.lines >= 200 : a.team);
+  sups.forEach(s => { s.role = s.natBin != null ? roles[s.natBin] : roles.find(r => r.kind === 'reg' && r.region === s.topRegion) || roles[0]; });
+  roles.forEach(r => Object.assign(r, {L:0, teamL:0, staffL:0, V:0, sids:new Set(), by:new Map(), own:new Map(), kinds:{National:0, Regional:0, 'Cross-region':0}}));
+  sups.forEach(s => { const r = s.role; r.sids.add(s.sid); r.kinds[s.kind]++;
+    const ok = bscKey(s.owner); s.pairs.forEach(p => { p.role = r; r.L += load(p); r.teamL += p.teamL; r.staffL += p.staffL; r.V += pv(p);
+      p.by.forEach((n, k) => r.by.set(k, (r.by.get(k) || 0) + n)); if (ok) r.own.set(ok, (r.own.get(ok) || 0) + pv(p)); }); });
+  roles.forEach(r => { r.util = cap ? r.L / cap : null; r.nSup = r.sids.size; });
+  // fit: knows the suppliers, scorecard, handles the volume
   const fitOf = (a, r) => {
     const wrote = r.by.get(a.key) || 0, maxWrote = Math.max(1, ...people.map(x => r.by.get(x.key) || 0));
     const owned = r.own.get(a.key) || 0, maxOwned = Math.max(1, ...people.map(x => r.own.get(x.key) || 0));
     const fam = 0.5 * wrote / maxWrote + 0.5 * owned / maxOwned;
     const perf = a.team && a.score != null ? a.score / 100 : a.onTime != null ? Math.max(0, Math.min(1, (a.onTime - 0.45) / 0.4)) : 0.5;
     const vol = r.L ? Math.min(1, a.lines / r.L) : 0;
-    const w = BS.wFam + BS.wPerf + BS.wVol || 1;
-    return {fit:100 * (BS.wFam * fam + BS.wPerf * perf + BS.wVol * vol) / w, fam, perf, vol, wrote, wroteShare:r.teamL ? wrote / r.teamL : 0, owned, ownedShare:r.V ? owned / r.V : 0};
+    const w = C.wFam + C.wPerf + C.wVol || 1;
+    return {fit:100 * (C.wFam * fam + C.wPerf * perf + C.wVol * vol) / w, fam, perf, vol, wrote, wroteShare:r.teamL ? wrote / r.teamL : 0, owned, ownedShare:r.V ? owned / r.V : 0};
   };
   const fit = new Map(); people.forEach(a => roles.forEach(r => fit.set(a.key + '|' + r.id, fitOf(a, r))));
-  // optimal assignment, keeping any picks made by hand
-  const fixed = new Map(); roles.forEach(r => { const w = BS.roleWho[r.id]; if (w === '__open') fixed.set(r.id, null); else if (w && people.some(a => a.key === w)) fixed.set(r.id, w); });
+  // placing people: the best total fit, plus a nudge that puts the strongest scorecards on the biggest roles
+  const maxRL = Math.max(1, ...roles.map(r => r.L));
+  // role size by rank: the biggest role +0.5, the smallest -0.5 (national roles would otherwise dwarf every regional one)
+  const bySize = roles.slice().sort((x, y) => y.L - x.L), imp = r => roles.length > 1 ? 0.5 - bySize.indexOf(r) / (roles.length - 1) : 0;
+  const placeScore = (a, r) => { const f = fit.get(a.key + '|' + r.id); return f.fit + C.strong / 100 * 100 * (f.perf - 0.5) * imp(r); };
+  const fixed = new Map(); roles.forEach(r => { const w = C.roleWho[r.id]; if (w === '__open' && C.hire) fixed.set(r.id, null); else if (w && w !== '__open' && people.some(a => a.key === w)) fixed.set(r.id, w); });
   const usedFixed = new Set([...fixed.values()].filter(Boolean));
   const freeRoles = roles.filter(r => !fixed.has(r.id)), freePeople = people.filter(a => !usedFixed.has(a.key));
   const n = Math.max(freeRoles.length, freePeople.length);
-  const M = Array.from({length:n}, (_, i) => Array.from({length:n}, (_, j) => i < freeRoles.length && j < freePeople.length ? 100 - fit.get(freePeople[j].key + '|' + freeRoles[i].id).fit : 100));
+  // an empty seat (new hire) goes to a smaller role, so experienced buyers carry the big ones while the new person ramps up
+  const hireScore = r => 50 * (1 - r.L / maxRL);
+  const M = Array.from({length:n}, (_, i) => Array.from({length:n}, (_, j) => i >= freeRoles.length ? 200 : j < freePeople.length ? 200 - placeScore(freePeople[j], freeRoles[i]) : 200 - hireScore(freeRoles[i])));
   const sol = n ? bsHungarian(M) : [];
   roles.forEach(r => { r.who = fixed.has(r.id) ? (fixed.get(r.id) ? people.find(a => a.key === fixed.get(r.id)) : null) : null; r.pinned = fixed.has(r.id); });
   freeRoles.forEach((r, i) => { const j = sol[i]; r.who = j != null && j < freePeople.length ? freePeople[j] : null; });
   roles.forEach(r => { r.f = r.who ? fit.get(r.who.key + '|' + r.id) : null;
     r.alt = people.filter(a => !r.who || a.key !== r.who.key).map(a => ({a, f:fit.get(a.key + '|' + r.id)})).sort((x, y) => y.f.fit - x.f.fit)[0] || null; });
+  // strongest / weakest, for the explanation
+  const ranked = people.filter(a => a.team && a.score != null).sort((x, y) => y.score - x.score);
+  roles.forEach(r => { if (!r.who || !ranked.length) return; const i = ranked.indexOf(r.who); r.strength = i < 0 ? null : i === 0 ? 'strongest' : i === ranked.length - 1 ? 'weakest' : null;
+    r.sizeRank = roles.slice().sort((x, y) => y.L - x.L).indexOf(r) + 1; });
   const unplaced = people.filter(a => !roles.some(r => r.who && r.who.key === a.key));
   // service: stockouts on each branch x supplier move toward the new owner's stockout rate
   const rateOf = new Map(scored.filter(a => a.soRate != null).map(a => [a.key, a.soRate]));
   const rates = [...rateOf.values()].sort((x, y) => x - y), medRate = rates.length ? rates[Math.floor(rates.length / 2)] : null;
-  const nameToSid = new Map(sups.map(s => [String(s.name).toLowerCase(), s.sid]));
+  const nameToSid = new Map(sups.map(s => [String(s.name).toLowerCase(), s.sid])), supById = new Map(sups.map(s => [s.sid, s]));
   const ev = stockoutView().filter(e => isBranch(e.loc));
   const fl = fillView().filter(f => f.type === 'BRANCH');
   const base = {so:ev.length, lost:sum(ev, e => e.lostSales), lines:sum(fl, f => f.lines), judged:sum(fl, f => f.judged), filled:sum(fl, f => f.filled)};
-  const proj = {so:0, lost:0}, byReg = new Map(roles.filter(r => r.kind === 'reg').map(r => [r.region, {so:0, pso:0, lost:0, plost:0, lines:0}]));
-  const factorFor = (loc, sid, oldBuyer) => {
-    const p = pair.get(loc + '|' + sid), r = p ? p.role : roles.find(x => x.kind === 'reg' && x.region === regOf.get(loc));
+  const proj = {so:0, lost:0, skill:0, load:0}, byReg = new Map(regs.map(r => [r, {so:0, pso:0, lost:0, plost:0, lines:0}]));
+  const factorFor = (sid, oldBuyer) => {
+    factorFor.last = null;
+    const s = supById.get(sid), r = s ? s.role : null;
     if (!r) return 1;
     const oldR = rateOf.get(bscKey(oldBuyer)) ?? medRate, newR = r.who ? rateOf.get(r.who.key) ?? medRate : medRate;
-    let f = 1;
-    if (oldR && newR) f = 1 + BS.skill / 100 * (Math.min(2, Math.max(0.5, newR / oldR)) - 1);
-    if (r.util > 1) f *= 1 + BS.overload / 100 * (r.util - 1) * 10;
-    return f;
+    let fs = 1, fl = 1;
+    if (oldR && newR) fs = 1 + C.skill / 100 * (Math.min(2, Math.max(0.5, newR / oldR)) - 1);   // moves toward the new owner's stockout rate
+    if (r.util > 1) fl = 1 + C.overload / 100 * (r.util - 1) * 10;                                // role over capacity
+    factorFor.last = {fs, fl}; return fs * fl;
   };
-  ev.forEach(e => { const sid = String(e.primary_supplier_id || nameToSid.get(String(e.supplier || '').toLowerCase()) || ''); const f = factorFor(e.loc, sid, e.buyer);
-    proj.so += f; proj.lost += e.lostSales * f; const g = byReg.get(regOf.get(e.loc)); if (g) { g.so++; g.pso += f; g.lost += e.lostSales; g.plost += e.lostSales * f; } });
+  ev.forEach(e => { const sid = String(e.primary_supplier_id || nameToSid.get(String(e.supplier || '').toLowerCase()) || ''); const f = factorFor(sid, e.buyer);
+    proj.so += f; proj.lost += e.lostSales * f; proj.skill += factorFor.last ? factorFor.last.fs - 1 : 0; proj.load += factorFor.last ? factorFor.last.fl - 1 : 0; const g = byReg.get(regOf.get(e.loc)); if (g) { g.so++; g.pso += f; g.lost += e.lostSales; g.plost += e.lostSales * f; } });
   fl.forEach(f => { const g = byReg.get(regOf.get(f.loc)); if (g) g.lines += f.lines; });
   const missPerSo = base.so ? (base.judged - base.filled) / base.so : 0;
   const fillNow = base.judged ? base.filled / base.judged : null;
   const fillProj = fillNow == null ? null : Math.max(0, Math.min(1, fillNow - (proj.so - base.so) * Math.min(1, missPerSo) / base.judged));
-  // changes needed
-  const supChanges = sups.filter(s => { const r = s.national ? roles[s.natBin || 0] : null; return r && r.who && bscKey(s.owner) !== r.who.key; }).length;
+  // vendor handover: who has each supplier in P21 today, and who would
+  sups.forEach(s => { s.newKey = s.role.who ? s.role.who.key : null; s.newName = s.role.who ? s.role.who.name : 'New hire'; s.nowName = s.owner ? bscName(s.owner) : 'No buyer assigned';
+    s.changes = !s.newKey || bscKey(s.owner) !== s.newKey; });
+  const supChanges = sups.filter(s => s.changes).length;
   const pairsMoving = [...pair.values()].filter(p => p.role && p.role.who && p.teamL && !p.by.has(p.role.who.key));
-  return {branches, nB, natMin, move, moveDef, cap, capDef, sups, nat, roles, regs, regOf, people, unplaced, fit, base, proj, byReg, fillNow, fillProj, supChanges, pairsMoving,
-    allL:sum(roles, r => r.L), allV:sum(roles, r => r.V), cashV:sum(raw.filter(r => cash(r.supplier_name)), r => +r.po_value || 0), teamNow:scored.filter(a => a.team && a.lines >= 200).length};
+  return {C, asked, nN, rN, managers, branches, nB, natMin, move, moveDef, cap, capDef, sups, nat, roles, regs, regOf, geo, people, unplaced, fit, base, proj, byReg, fillNow, fillProj, supChanges, pairsMoving,
+    allL:sum(roles, r => r.L), allV:sum(roles, r => r.V), cashV:sum(raw.filter(r => cash(r.supplier_name)), r => +r.po_value || 0), teamNow:scored.filter(a => a.team && a.lines >= 200 && !isMgr(a)).length};
 }
 
 function renderBuyerStructure(){
@@ -5052,6 +5180,8 @@ function renderBuyerStructure(){
   if (!m) { story('st_bs', ['No branch purchasing by supplier yet. Click Refresh data to run the supplier_branch_buying query.']); $('bsBody').hidden = true; return; }
   $('bsBody').hidden = false;
   const natV = sum(m.nat, s => s.val), natL = sum(m.roles.filter(r => r.kind === 'nat'), r => r.L), nRoles = m.roles.length, open = m.roles.filter(r => !r.who);
+  const kinds = k => m.sups.filter(s => s.kind === k), regS = kinds('Regional'), crossS = kinds('Cross-region');
+  const shrunk = m.rN < m.asked.reg || m.nN < m.asked.nat;
   const dSo = m.proj.so - m.base.so, over = m.roles.filter(r => r.util > 1.1);
   // controls reflect the model's defaults
   const setV = (id, v) => { const el = $(id); if (el && document.activeElement !== el) el.value = v; };
@@ -5059,24 +5189,41 @@ function renderBuyerStructure(){
   setV('bsNatSpend', BS.natSpend); setV('bsNatBuyers', BS.natBuyers); setV('bsRegions', BS.regions); setV('bsGroupBy', BS.groupBy); setV('bsCands', BS.cands);
   setV('bsMove', Math.round(m.move * 100)); $('bsMoveV').textContent = Math.round(m.move * 100) + '%';
   setV('bsCap', m.cap); $('bsCapV').textContent = nf(m.cap);
-  [['bsWFam', 'wFam'], ['bsWPerf', 'wPerf'], ['bsWVol', 'wVol'], ['bsSkill', 'skill'], ['bsOverload', 'overload'], ['bsDip', 'dip']].forEach(([id, k]) => { setV(id, BS[k]); $(id + 'V').textContent = BS[k] + '%'; });
+  setV('bsHire', BS.hire ? '1' : '0'); setV('bsCrossTo', BS.crossTo);
+  [['bsWFam', 'wFam'], ['bsWPerf', 'wPerf'], ['bsWVol', 'wVol'], ['bsSkill', 'skill'], ['bsOverload', 'overload'], ['bsDip', 'dip'], ['bsExcl', 'excl'], ['bsStrong', 'strong']].forEach(([id, k]) => { setV(id, BS[k]); $(id + 'V').textContent = BS[k] + '%'; });
   $('bsCash').checked = BS.excludeCash;
   story('st_bs', [
-    `${B(nf(m.nat.length))} suppliers are bought by at least ${m.natMin} of the ${m.nB} branches. They're ${B(pct(natV, m.allV))} of branch PO dollars (${compact(natV)} in 180 days) and ${pct(natL, m.allL)} of the buying work. Giving them to ${BS.natBuyers > 1 ? B(BS.natBuyers + ' national buyers') : B('one national buyer')} leaves ${nf(m.sups.length - m.nat.length)} suppliers for ${B(m.regs.length + ' regional buyers')}: ${m.regs.map(r => `${esc(r.name)} (${r.locs.length})`).join(', ')}.`,
-    `At ${nf(m.cap)} PO lines per buyer per 180 days, the national work alone needs about ${B(nf(Math.round(natL / m.cap * 10) / 10) + ' buyers')} and the whole job about ${B(nf(Math.round(m.allL / m.cap * 10) / 10))}. That's ${B(nRoles + ' roles')} against ${m.teamNow} people on the buying team today${open.length ? `, so ${B(open.length + ' role' + (open.length > 1 ? 's' : ''))} would need someone new or a branch buyer to step up` : ''}. ${over.length ? `${over.map(r => esc(r.title)).join(', ')} ${over.length > 1 ? 'run' : 'runs'} over capacity at ${nf(m.cap)} lines per buyer per 180 days.` : `Every role fits within ${nf(m.cap)} PO lines per buyer per 180 days.`}`,
-    `With the best fit in each seat, stockouts would move from ${B(nf(m.base.so))} to about ${B(nf(Math.round(m.proj.so)))} per 180 days (${dSo <= 0 ? '' : '+'}${pct(dSo, m.base.so)}) once the change settles; expect roughly ${BS.dip}% more during the first 90 days of handover. This is an estimate from today's stockout rates by buyer and the settings below, not a forecast.`]);
+    `${B(nf(m.nat.length))} suppliers are bought by at least ${m.natMin} of the ${m.nB} branches. They're ${B(pct(natV, m.allV))} of branch PO dollars (${compact(natV)} in 180 days) and ${pct(natL, m.allL)} of the buying work. Giving them to ${BS.natBuyers > 1 ? B(BS.natBuyers + ' national buyers') : B('one national buyer')} leaves ${nf(m.sups.length - m.nat.length)} suppliers for ${B(m.regs.length + ' regional buyers')}: ${m.regs.map(r => `${esc(r.name)} (${r.locs.length})`).join(', ')}${shrunk ? ` (cut from ${m.asked.reg} because there's no one for the extra seats)` : ''}. ${B(nf(regS.length))} of them are regional (${BS.excl}%+ of their spend in one region, ${pct(sum(regS, s => s.val), m.allV)} of PO $); ${nf(crossS.length)} are spread across regions (${pct(sum(crossS, s => s.val), m.allV)}) and go to ${BS.crossTo === 'national' ? 'the national buyers' : 'the region that buys the most'}.`,
+    `At ${nf(m.cap)} PO lines per buyer per 180 days, the national work alone needs about ${B(nf(Math.round(natL / m.cap * 10) / 10) + ' buyers')} and the whole job about ${B(nf(Math.round(m.allL / m.cap * 10) / 10))}. That's ${B(nRoles + ' roles')} against ${m.teamNow} buyers on the team today${m.managers.length ? ` (not counting ${m.managers.map(a => esc(a.name)).join(' and ')}, who manage${m.managers.length > 1 ? '' : 's'} the team)` : ''}${open.length ? `, so ${B(open.length + ' new hire' + (open.length > 1 ? 's' : ''))}` : ''}. ${over.length ? `${over.map(r => esc(r.title)).join(', ')} ${over.length > 1 ? 'run' : 'runs'} over capacity at ${nf(m.cap)} lines per buyer per 180 days.` : `Every role fits within ${nf(m.cap)} PO lines per buyer per 180 days.`}`,
+    `With the best fit in each seat, stockouts would move from ${B(nf(m.base.so))} to about ${B(nf(Math.round(m.proj.so)))} per 180 days (${dSo <= 0 ? '' : '+'}${pct(dSo, m.base.so)}) once the change settles: ${pctTxt(m.base.so ? m.proj.load / m.base.so : null)} from roles running over capacity and ${pctTxt(m.base.so ? m.proj.skill / m.base.so : null)} from who owns each vendor. Both are assumptions, not measurements; see Service impact for what drives them.`]);
   $('bsStats').innerHTML =
     stat('National suppliers', nf(m.nat.length), `${pct(natV, m.allV)} of branch PO $ · bought by ${m.natMin}+ of ${m.nB} branches`) +
-    stat('Roles', nf(nRoles), `${BS.natBuyers} national + ${m.regs.length} regional · ${m.teamNow} on the team today`, open.length ? 'warn' : '') +
+    stat('Roles', nf(nRoles), `${BS.natBuyers} national + ${m.regs.length} regional · ${m.teamNow} buyers today${open.length ? ` · ${open.length} new hire${open.length > 1 ? 's' : ''}` : ''}`, open.length ? 'warn' : '') +
     stat('Busiest role', pctTxt0(Math.max(...m.roles.map(r => r.util || 0))), `of ${nf(m.cap)} lines per 180 days`, over.length ? 'bad' : 'good') +
     stat('Stockouts, settled', `${dSo <= 0 ? '' : '+'}${pct(dSo, m.base.so)}`, `${nf(m.base.so)} → ${nf(Math.round(m.proj.so))} per 180 days (estimate)`, dSo <= 0 ? 'good' : 'warn') +
-    stat('Supplier owners to change', nf(m.supChanges), `national suppliers whose P21 buyer changes · ${nf(m.pairsMoving.length)} branch-supplier pairs get a new writer`);
+    stat('Vendors changing owner', nf(m.supChanges), `of ${nf(m.sups.length)} vendors, P21 buyer changes · ${nf(m.pairsMoving.length)} branch-supplier pairs get a new writer`);
+  bsHireCompare(m);
   bsOrgChart(m); bsCharts(m); bsService(m); bsPlan(m); bsTables(m);
 }
 
+// the same settings with the opposite hiring choice, side by side
+function bsHireCompare(m){
+  const alt = bsModel({hire:!BS.hire}), card = $('bsHireCard');
+  const differs = alt && (alt.roles.length !== m.roles.length || alt.roles.some(r => !r.who) !== m.roles.some(r => !r.who));
+  card.hidden = !differs; if (!differs) return;
+  const withH = BS.hire ? m : alt, noH = BS.hire ? alt : m;
+  const col = (x, t) => { const so = x.proj.so - x.base.so, busy = Math.max(...x.roles.map(r => r.util || 0)), hires = x.roles.filter(r => !r.who);
+    return `<div class="bs-cmp${x === m ? ' on' : ''}"><h4>${t}${x === m ? ' <span class="muted">(showing)</span>' : ''}</h4><ul>
+      <li><b>${x.roles.length}</b> roles: ${x.nN} national + ${x.regs.length} regional${hires.length ? ` · <b style="color:var(--bad)">${hires.length} new hire${hires.length > 1 ? 's' : ''}</b>` : ''}</li>
+      <li>Regions: ${x.regs.map(r => `${esc(r.name)} (${r.locs.length})`).join(', ')}</li>
+      <li>Busiest role: <b>${pctTxt0(busy)}</b> of capacity</li>
+      <li>Stockouts once settled: <b>${so <= 0 ? '' : '+'}${pct(so, x.base.so)}</b> (${nf(x.base.so)} → ${nf(Math.round(x.proj.so))})</li>
+      <li>Seats: ${x.roles.map(r => `${esc(r.kind === 'nat' ? r.title : r.region.name)}: ${r.who ? esc(r.who.name) : '<b>new hire</b>'}`).join(' · ')}</li></ul></div>`; };
+  $('bsHire2').innerHTML = `<div class="bs-cmps">${col(withH, 'With a new hire')}${col(noH, 'No new hires')}</div><p class="muted" style="margin:8px 0 0">Switch with <b>If there aren't enough people</b> in the settings.</p>`;
+}
 function bsOrgChart(m){
   const card = r => {
-    const opts = `<option value="">Best fit</option>` + m.people.map(a => `<option value="${esc(a.key)}"${BS.roleWho[r.id] === a.key ? ' selected' : ''}>${esc(a.name)}</option>`).join('') + `<option value="__open"${BS.roleWho[r.id] === '__open' ? ' selected' : ''}>Leave open (hire)</option>`;
+    const opts = `<option value="">Best fit</option>` + m.people.map(a => `<option value="${esc(a.key)}"${BS.roleWho[r.id] === a.key ? ' selected' : ''}>${esc(a.name)}</option>`).join('') + `<option value="__open"${BS.roleWho[r.id] === '__open' ? ' selected' : ''}>New hire</option>`;
     const f = r.f, why = [];
     if (r.who && f) {
       if (f.wroteShare >= 0.05) why.push(`writes ${pctTxt0(f.wroteShare)} of these buying-team lines today`);
@@ -5084,18 +5231,22 @@ function bsOrgChart(m){
       if (r.who.team && r.who.score != null) why.push(`scorecard ${r.who.grade.g} ${Math.round(r.who.score)} (stockout rate ${pctTxt0(r.who.soRate)})`);
       else if (r.who.onTime != null) why.push(`${pctTxt0(r.who.onTime)} of PO lines on time`);
       why.push(`handles ${nf(r.who.lines)} lines per 180 days now; this role is ${nf(Math.round(r.L))}`);
+      const sz = `the ${r.sizeRank === 1 ? 'biggest' : ordinal(r.sizeRank) + '-biggest'} of ${m.roles.length} roles`;
+      if (r.strength === 'strongest') why.push(`strongest scorecard on the team, on ${sz}${r.sizeRank > m.roles.length / 2 ? '; knowing these vendors outweighed size here (raise "Strongest buyers on the biggest roles" to move them up)' : ''}`);
+      if (r.strength === 'weakest') why.push(`lowest scorecard on the team, on ${sz}${r.sizeRank <= m.roles.length / 2 ? `; pair with ${r.alt ? esc(r.alt.a.name) : 'a stronger buyer'} for the first months, or raise "Strongest buyers on the biggest roles"` : ''}`);
     }
     const u = r.util || 0, uc = u > 1.1 ? 'var(--bad)' : u > 0.95 ? 'var(--s-aging)' : 'var(--good)';
     return `<div class="bs-role" style="--rc:${r.c}"><div class="bs-rh"><span class="bs-dot"></span>${r.kind === 'reg' ? `<input class="bs-rname" data-key="${r.region.ix}" value="${esc(r.region.name)}" style="width:${r.region.name.length + 3}ch" title="Rename this region">` : `<b>${esc(r.title)}</b>`}${r.kind === 'reg' ? '<span class="muted"> buyer</span>' : ''}</div>
-      <div class="bs-who"><span class="bs-name">${r.who ? esc(r.who.name) : '<span style="color:var(--bad)">Open role</span>'}</span>${f ? `<span class="bs-fit" title="Fit score: familiarity, performance and volume, weighted by the settings">fit ${Math.round(f.fit)}</span>` : ''}
+      <div class="bs-who"><span class="bs-name">${r.who ? esc(r.who.name) : '<span style="color:var(--bad)">New hire</span>'}</span>${f ? `<span class="bs-fit" title="Fit score: familiarity, performance and volume, weighted by the settings">fit ${Math.round(f.fit)}</span>` : ''}
         <select class="bs-pick" data-role="${esc(r.id)}" title="Choose who fills this role">${opts}</select></div>
-      ${why.length ? `<ul class="bs-why">${why.map(w => `<li>${w}</li>`).join('')}</ul>` : '<p class="muted bs-why">No one on the list is a good fit; this would be a new hire or a branch buyer stepping up.</p>'}
+      ${why.length ? `<ul class="bs-why">${why.map(w => `<li>${w}</li>`).join('')}</ul>` : `<p class="muted bs-why">More seats than people: this is a new hire, put on one of the smaller roles (the ${ordinal(r.sizeRank || m.roles.slice().sort((x, y) => y.L - x.L).indexOf(r) + 1)} of ${m.roles.length} by workload) so experienced buyers carry the bigger ones. ${r.alt ? `${esc(r.alt.a.name)} covers until they start and trains them.` : ''} Or promote a strong branch buyer: switch Candidates to see them.</p>`}
       ${r.alt ? `<div class="muted bs-alt">Next best: ${esc(r.alt.a.name)} (fit ${Math.round(r.alt.f.fit)})</div>` : ''}
       <div class="bs-load"><span><b>${nf(Math.round(r.L))}</b> PO lines / 180 days · ${nf(r.nSup)} suppliers · ${compact(r.V)}</span><span class="bs-bar"><i style="width:${Math.min(100, u * 100).toFixed(0)}%;background:${uc}"></i></span><span style="color:${uc};font-weight:600">${pctTxt0(u)} of capacity</span></div>
-      <div class="bs-locs">${r.kind === 'nat' ? `All ${m.nB} branches · ${nf(r.sids.size)} national suppliers` : r.locs.map(l => `<span class="bs-chip">${esc(locName(l))}</span>`).join('')}</div></div>`;
+      <div class="bs-mix">${['National', 'Regional', 'Cross-region'].filter(k => r.kinds[k]).map(k => `<span>${nf(r.kinds[k])} ${k.toLowerCase()}</span>`).join(' · ')} vendors</div>
+      <div class="bs-locs">${r.kind === 'nat' ? `All ${m.nB} branches` : r.locs.map(l => `<span class="bs-chip">${esc(locName(l))}</span>`).join('')}</div></div>`;
   };
-  $('bsOrg').innerHTML = `<div class="bs-tier"><div class="bs-tl">National: suppliers ${m.natMin}+ branches buy from</div><div class="bs-row">${m.roles.filter(r => r.kind === 'nat').map(card).join('')}</div></div>
-    <div class="bs-tier"><div class="bs-tl">Regional: everything else, by branch</div><div class="bs-row">${m.roles.filter(r => r.kind === 'reg').map(card).join('')}</div></div>
+  $('bsOrg').innerHTML = `<div class="bs-tier"><div class="bs-tl">National: vendors ${m.natMin}+ branches buy from${BS.crossTo === 'national' ? ', plus vendors spread across regions' : ''}</div><div class="bs-row">${m.roles.filter(r => r.kind === 'nat').map(card).join('')}</div></div>
+    <div class="bs-tier"><div class="bs-tl">Regional: vendors bought mostly in one region${BS.crossTo === 'national' ? '' : ', plus spread-out vendors the region buys most of'}</div><div class="bs-row">${m.roles.filter(r => r.kind === 'reg').map(card).join('')}</div></div>
     ${m.unplaced.length ? `<p class="muted" style="margin:10px 0 0">Not in a buying seat in this scenario: ${m.unplaced.map(a => esc(a.name)).join(', ')}. They could back up a busy role, cover the corporate DCs, or take on non-stock and special orders.</p>` : ''}`;
   $('bsOrg').querySelectorAll('.bs-pick').forEach(s => s.onchange = () => { if (s.value) BS.roleWho[s.dataset.role] = s.value; else delete BS.roleWho[s.dataset.role]; bsSave(); renderTab(); });
   $('bsOrg').querySelectorAll('.bs-rname').forEach(i => i.onchange = () => { const v = i.value.trim(); if (v) BS.regionName[i.dataset.key] = v; else delete BS.regionName[i.dataset.key]; bsSave(); renderTab(); });
@@ -5103,14 +5254,26 @@ function bsOrgChart(m){
 
 function bsCharts(m){
   chartDefaults();
-  const pts = m.branches.map(l => ({l, g:bsGeo(locName(l).replace(/\s*\(\d+\)$/, '')) || bsGeo((locMeta.get(l) || {}).name), r:m.regOf.get(l)})).filter(p => p.g && p.r);
+  const pts = m.branches.map(l => ({l, g:m.geo.get(l), r:m.regOf.get(l)})).filter(p => p.g && p.r);
   $('bsMapCard').hidden = pts.length < 2;
   if (pts.length >= 2) {
-    make('cBSmap', {type:'scatter', data:{datasets:m.regs.map(r => ({label:r.name, data:pts.filter(p => p.r === r).map(p => ({x:p.g[1], y:p.g[0], l:p.l})), backgroundColor:r.c, borderColor:css('--panel'), borderWidth:2, pointRadius:9, pointHoverRadius:11}))},
-      options:{maintainAspectRatio:false, animation:ANIM(), scales:{x:{display:false, grace:'6%'}, y:{display:false, grace:'10%'}},
+    const lons = pts.map(p => p.g[1]), lats = pts.map(p => p.g[0]);
+    const x0 = Math.min(-124.8, Math.min(...lons) - 2), x1 = Math.max(-67, Math.max(...lons) + 2), y0 = Math.min(24.5, Math.min(...lats) - 2), y1 = Math.max(49.5, Math.max(...lats) + 2);
+    make('cBSmap', {type:'scatter', data:{datasets:m.regs.map(r => ({label:r.name, data:pts.filter(p => p.r === r).map(p => ({x:p.g[1], y:p.g[0], l:p.l})), backgroundColor:r.c, borderColor:css('--panel'), borderWidth:2, pointRadius:8, pointHoverRadius:10}))},
+      options:{maintainAspectRatio:false, animation:ANIM(), layout:{padding:{top:4, right:8, bottom:4, left:8}},
+        scales:{x:{type:'linear', display:false, min:x0, max:x1}, y:{type:'linear', display:false, min:y0, max:y1}},
         plugins:{legend:{position:'top', align:'start'}, tooltip:{callbacks:{label:c => ` ${locName(c.raw.l)} · ${c.dataset.label}`}}}},
-      plugins:[{id:'bsLabels', afterDatasetsDraw(ch){ const ctx = ch.ctx; ctx.save(); ctx.font = '11px ' + css('--font'); ctx.fillStyle = css('--ink2'); ctx.textAlign = 'center';
-        ch.data.datasets.forEach((d, di) => ch.getDatasetMeta(di).data.forEach((pt, i) => ctx.fillText(locName(d.data[i].l).replace(/\s*\(\d+\)$/, ''), pt.x, pt.y - 13))); ctx.restore(); }}]});
+      plugins:[{id:'bsMap', beforeDatasetsDraw(ch){
+        const ctx = ch.ctx, X = v => ch.scales.x.getPixelForValue(v), Y = v => ch.scales.y.getPixelForValue(v);
+        ctx.save(); ctx.beginPath(); BS_US.forEach(([lo, la], i) => i ? ctx.lineTo(X(lo), Y(la)) : ctx.moveTo(X(lo), Y(la))); ctx.closePath();
+        ctx.fillStyle = css('--soft'); ctx.fill(); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1.5; ctx.stroke();
+        // each region: a soft rounded area around its branches
+        ch.data.datasets.forEach((d, di) => { const px = ch.getDatasetMeta(di).data.map(pt => [pt.x, pt.y]); if (!px.length) return;
+          const hull = bsHull(px); ctx.beginPath(); hull.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); if (hull.length > 2) ctx.closePath();
+          ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.lineWidth = 34; ctx.strokeStyle = hexA(d.backgroundColor, .16); ctx.stroke(); if (hull.length > 2) { ctx.fillStyle = hexA(d.backgroundColor, .16); ctx.fill(); } });
+        ctx.restore(); },
+        afterDatasetsDraw(ch){ const ctx = ch.ctx; ctx.save(); ctx.font = '11px ' + css('--font'); ctx.fillStyle = css('--ink2'); ctx.textAlign = 'center';
+          ch.data.datasets.forEach((d, di) => ch.getDatasetMeta(di).data.forEach((pt, i) => ctx.fillText(locName(d.data[i].l).replace(/\s*\(\d+\)$/, ''), pt.x, pt.y - 12))); ctx.restore(); }}]});
   }
   const rs = m.roles;
   $('bsLoadBox').style.height = Math.max(200, rs.length * 34 + 70) + 'px';
@@ -5119,7 +5282,7 @@ function bsCharts(m){
       {label:'Branch-staff lines moving in', data:rs.map(r => Math.round(m.move * r.staffL)), backgroundColor:rs.map(r => hexA(r.c, .45))}]},
     options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
       scales:{x:{stacked:true, ticks:{callback:x => nf(x)}, title:{display:true, text:'PO lines per 180 days'}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
-      plugins:{legend:{position:'top', align:'start'}, tooltip:{callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)}`, footer:i => { const r = rs[i[0].dataIndex]; return `${pctTxt0(r.util)} of capacity · ${r.who ? r.who.name : 'open role'}`; }}}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)}`, footer:i => { const r = rs[i[0].dataIndex]; return `${pctTxt0(r.util)} of capacity · ${r.who ? r.who.name : 'new hire'}`; }}}}},
     plugins:[{id:'bsCap', afterDatasetsDraw(ch){ const x = ch.scales.x.getPixelForValue(m.cap), a = ch.chartArea, ctx = ch.ctx; if (x < a.left || x > a.right) return;
       ctx.save(); ctx.strokeStyle = css('--bad'); ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke();
       ctx.setLineDash([]); ctx.fillStyle = css('--bad'); ctx.font = '11px ' + css('--font'); ctx.fillText('capacity', x + 4, a.top + 10); ctx.restore(); }}]});
@@ -5128,9 +5291,14 @@ function bsCharts(m){
 function bsService(m){
   const t = m.base, p = m.proj, regRows = [...m.byReg.entries()].map(([r, g]) => {
     const role = m.roles.find(x => x.region === r);
-    return {name:r.name, branches:r.locs.map(l => locName(l)).join(', '), who:role && role.who ? role.who.name : 'Open role', so:g.so, pso:Math.round(g.pso), d:g.so ? (g.pso - g.so) / g.so : null, lost:g.lost, plost:g.plost, rate:g.lines ? g.so / g.lines : null, prate:g.lines ? g.pso / g.lines : null};
+    return {name:r.name, branches:r.locs.map(l => locName(l)).join(', '), who:role && role.who ? role.who.name : 'New hire', so:g.so, pso:Math.round(g.pso), d:g.so ? (g.pso - g.so) / g.so : null, lost:g.lost, plost:g.plost, rate:g.lines ? g.so / g.lines : null, prate:g.lines ? g.pso / g.lines : null};
   });
-  $('bsSvc').innerHTML = `<div class="bs-svc">
+  const over = m.roles.filter(r => r.util > 1), sk = m.proj.skill, ld = m.proj.load;
+  const why = `<div class="bs-step"><h4>What drives this estimate</h4><ul>
+    <li><b>Workload: ${ld >= 0.5 ? '+' : ''}${nf(Math.round(ld))} stockouts</b> (${pctTxt(t.so ? ld / t.so : null)}). ${over.length ? `${over.map(r => `${esc(r.kind === 'nat' ? r.title : r.region.name)} at ${pctTxt0(r.util)} of capacity`).join(', ')}; the settings assume ${BS.overload}% more stockouts for every 10% over. Fix it with more national buyers, a higher national threshold (fewer national vendors), or less branch-staff buying moving in.` : 'No role is over capacity, so workload adds nothing.'}</li>
+    <li><b>Who owns each vendor: ${sk >= 0 ? '+' : ''}${nf(Math.round(sk))} stockouts</b> (${pctTxt(t.so ? sk / t.so : null)}). Each vendor's stockouts move ${BS.skill}% of the way toward its new owner's stockout rate on today's scorecard (${m.people.filter(a => a.soRate != null).sort((x, y) => x.soRate - y.soRate).map(a => `${esc(a.name)} ${pctTxt0(a.soRate)}`).join(', ')}). Those rates also reflect how hard each person's current vendors are, so treat this part as a rough guide.</li>
+    <li>Neither is measured from a past reorganisation; both are assumptions you can change under Service assumptions. Set both to 0 to see the plan with no service effect.</li></ul></div>`;
+  $('bsSvc').innerHTML = why + `<div class="bs-svc">
     <div><span class="k-label">Stockouts per 180 days</span><b>${nf(t.so)} → ${nf(Math.round(p.so))}</b><span class="muted">${pctTxt(t.so ? (p.so - t.so) / t.so : null)} once settled · about ${nf(Math.round(p.so * (1 + BS.dip / 100)))} at the pace of the first 90 days</span></div>
     <div><span class="k-label">Stockout rate</span><b>${pctTxt0(t.lines ? t.so / t.lines : null)} → ${pctTxt0(t.lines ? p.so / t.lines : null)}</b><span class="muted">per customer order line on stocked items</span></div>
     <div><span class="k-label">Line fill (rough)</span><b>${pctTxt0(m.fillNow)} → ${pctTxt0(m.fillProj)}</b><span class="muted">assumes missed lines move with stockouts</span></div>
@@ -5143,20 +5311,24 @@ function bsService(m){
 
 function bsPlan(m){
   const nat = m.roles.filter(r => r.kind === 'nat'), reg = m.roles.filter(r => r.kind === 'reg').slice().sort((a, b) => (b.f ? b.f.fam : 0) - (a.f ? a.f.fam : 0));
-  const natOwnerSame = m.nat.filter(s => { const r = nat[s.natBin || 0]; return r && r.who && bscKey(s.owner) === r.who.key; }).length;
+  const natS = m.sups.filter(s => s.role.kind === 'nat'), natOwnerSame = natS.filter(s => !s.changes).length, natChanges = natS.length - natOwnerSame;
+  const regChanges = r => m.sups.filter(s => s.role === r && s.changes).length;
   const staffMoving = sum(m.roles, r => m.move * r.staffL);
   const risks = [];
+  const xr = m.sups.filter(s => s.kind === 'Cross-region' && s.val >= 100000);
+  if (xr.length) risks.push(`${nf(xr.length)} vendors over $100K are spread across regions (no region has ${BS.excl}% of their spend); they go to ${BS.crossTo === 'national' ? 'the national buyers' : 'the region that buys the most'}. Review them in the Suppliers table (filter Type) and pin any that should be national.`);
   m.roles.filter(r => r.util > 1.1).forEach(r => risks.push(`${esc(r.kind === 'nat' ? r.title : r.region.name)} is at ${pctTxt0(r.util)} of capacity: split it, add a backup, or keep more of its branch-staff buying at the branches.`));
-  m.roles.filter(r => !r.who).forEach(r => risks.push(`${esc(r.kind === 'nat' ? r.title : r.region.name + ' buyer')} has no one assigned: hire, or promote the strongest branch buyer in that region (switch Candidates to "Team + branch buyers" to see them).`));
+  m.roles.filter(r => !r.who).forEach(r => risks.push(`${esc(r.kind === 'nat' ? r.title : r.region.name + ' buyer')} needs a new hire: start recruiting in weeks 0–2 so they can shadow before their handover, or promote the strongest branch buyer in that region (switch Candidates to "Team + branch buyers" to see them).`));
   m.roles.filter(r => r.who && r.f && r.f.fam < 0.15).forEach(r => risks.push(`${esc(r.who.name)} is new to most of ${esc(r.kind === 'nat' ? 'the national suppliers' : r.region.name + "'s suppliers")}; pair them with ${r.alt ? esc(r.alt.a.name) : 'the current owners'} for the first month.`));
   const steps = [
     {t:'Weeks 0–2 · Decide and announce', d:[`Confirm the national list: ${nf(m.nat.length)} suppliers bought by ${m.natMin}+ branches (export below). Pin or unpin any that don't belong.`,
       `Confirm the ${m.regs.length} regions and who leads each (export the branch list below).`,
+      ...(m.roles.some(r => !r.who) ? [`Open ${m.roles.filter(r => !r.who).length} new-hire requisition${m.roles.filter(r => !r.who).length > 1 ? 's' : ''}: ${m.roles.filter(r => !r.who).map(r => esc(r.kind === 'nat' ? r.title : r.region.name + ' buyer')).join(', ')}. Until they start, the next-best person covers.`] : []),
       `Agree what moves to regional buyers from branch staff: ${Math.round(m.move * 100)}% of their lines (stock replenishment) in this scenario, about ${nf(Math.round(staffMoving / 26))} lines a week. Special orders and non-stock buying stay at the branches.`]},
-    {t:'Weeks 2–6 · National suppliers first', d:[`Change the P21 supplier buyer on ${nf(m.supChanges)} national suppliers; ${nf(natOwnerSame)} are already with the right person.`,
-      ...nat.map(r => `${esc(r.title)}: ${r.who ? esc(r.who.name) : 'open'} takes ${nf(r.sids.size)} suppliers, ${nf(Math.round(r.L))} lines per 180 days. The outgoing owners review their POs for two weeks.`),
+    {t:'Weeks 2–6 · National suppliers first', d:[`Change the P21 supplier buyer on ${nf(natChanges)} of the ${nf(natS.length)} national vendors; ${nf(natOwnerSame)} are already with the right person (Vendor handover below has the list).`,
+      ...nat.map(r => `${esc(r.title)}: ${r.who ? esc(r.who.name) : 'a new hire'} takes ${nf(r.sids.size)} suppliers, ${nf(Math.round(r.L))} lines per 180 days. The outgoing owners review their POs for two weeks.`),
       'Standardise review cycles and min/max ownership for these suppliers across branches; they are now one buyer\'s job.']},
-    {t:'Weeks 6–14 · Regions, one at a time', d:reg.map((r, i) => `${i + 1}. ${esc(r.region.name)} (${r.locs.map(l => esc(locName(l).replace(/\s*\(\d+\)$/, ''))).join(', ')}): ${r.who ? esc(r.who.name) : 'open role'}${r.f ? `, who already writes ${pctTxt0(r.f.wroteShare)} of its team lines` : ''}. ${nf(r.nSup)} suppliers, ${nf(Math.round(r.L))} lines per 180 days. About two weeks per region.`)
+    {t:'Weeks 6–14 · Regions, one at a time', d:reg.map((r, i) => `${i + 1}. ${esc(r.region.name)} (${r.locs.map(l => esc(locName(l).replace(/\s*\(\d+\)$/, ''))).join(', ')}): ${r.who ? esc(r.who.name) : 'new hire'}${r.f ? `, who already writes ${pctTxt0(r.f.wroteShare)} of its team lines` : ''}. ${nf(r.nSup)} vendors (${nf(regChanges(r))} change owner), ${nf(Math.round(r.L))} lines per 180 days. About two weeks per region.`)
       .concat(['Start with the region whose buyer already knows it best (the order above), so the process is proven before the harder moves.'])},
     {t:'Weeks 14–20 · Settle and measure', d:['Compare stockout rate, line fill and PO on-time by region each week against the baseline on this page; the Branch performance tab shows the same by branch.',
       'Re-run this page with the new owners loaded after a full refresh: workloads should match the plan within 10–15%.',
@@ -5166,18 +5338,32 @@ function bsPlan(m){
 }
 
 function bsTables(m){
-  const roleOfSup = s => s.national ? m.roles[s.natBin || 0] : null;
+  const roleName = r => r.kind === 'nat' ? r.title : r.region.name + ' buyer';
   table('tBSsup', [
-    {k:'name', h:'Supplier'}, {k:'cover', h:'Branches buying', type:'num'}, {k:'val', h:'PO $, 180 days', type:'money'}, {k:'lines', h:'PO lines', type:'num'},
-    {k:'owner', h:'P21 buyer today', get:r => r.owner ? bscName(r.owner) : ''},
-    {k:'tier', h:'Tier', get:r => r.national ? 'National' : 'Regional', filter:'set', html:r => `<select class="bs-supsel" data-sid="${esc(r.sid)}"><option value=""${!BS.supRole[r.sid] ? ' selected' : ''}>Auto: ${r.auto ? 'National' : 'Regional'}</option><option value="nat"${BS.supRole[r.sid] === 'nat' ? ' selected' : ''}>National</option><option value="reg"${BS.supRole[r.sid] === 'reg' ? ' selected' : ''}>Regional</option></select>`},
-    {k:'newBuyer', h:'New buyer', get:r => { const ro = roleOfSup(r); return ro ? (ro.who ? ro.who.name : 'Open role') : 'Regional buyers'; }},
-    {k:'change', h:'Owner changes', filter:'set', get:r => { const ro = roleOfSup(r); return ro && ro.who ? (bscKey(r.owner) === ro.who.key ? 'No' : 'Yes') : ro ? 'Yes' : 'By region'; }}
-  ], m.sups, {sortKey:'val', footId:'fBSsup', exportId:'xBSsup', exportName:'buyer_structure_suppliers', summary:s => `${nf(s.filter(x => x.national).length)} national of ${nf(s.length)} suppliers`});
+    {k:'name', h:'Supplier'}, {k:'kind', h:'Type', filter:'set', title:'National: bought by nearly every branch. Regional: most of its spend in one region. Cross-region: spread out.'},
+    {k:'cover', h:'Branches buying', type:'num'}, {k:'topReg', h:'Main region', filter:'set', get:r => r.topRegion ? r.topRegion.name : ''}, {k:'regShare', h:'Share in main region', type:'pct'},
+    {k:'val', h:'PO $, 180 days', type:'money'}, {k:'lines', h:'PO lines', type:'num'},
+    {k:'nowName', h:'P21 buyer today', filter:'set'},
+    {k:'roleName', h:'New role', filter:'set', get:r => roleName(r.role)}, {k:'newName', h:'New buyer', filter:'set'},
+    {k:'change', h:'Owner changes', filter:'set', get:r => r.changes ? 'Yes' : 'No'},
+    {k:'tier', h:'Tier', get:r => BS.supRole[r.sid] === 'nat' ? 'Pinned national' : BS.supRole[r.sid] === 'reg' ? 'Pinned regional' : 'Auto', filter:'set', html:r => `<select class="bs-supsel" data-sid="${esc(r.sid)}"><option value=""${!BS.supRole[r.sid] ? ' selected' : ''}>Auto</option><option value="nat"${BS.supRole[r.sid] === 'nat' ? ' selected' : ''}>National</option><option value="reg"${BS.supRole[r.sid] === 'reg' ? ' selected' : ''}>Regional</option></select>`}
+  ], m.sups, {sortKey:'val', footId:'fBSsup', exportId:'xBSsup', exportName:'buyer_structure_vendors',
+    summary:s => `${nf(s.length)} vendors · ${nf(s.filter(x => x.kind === 'National').length)} national, ${nf(s.filter(x => x.kind === 'Regional').length)} regional, ${nf(s.filter(x => x.kind === 'Cross-region').length)} cross-region · ${nf(s.filter(x => x.changes).length)} change owner`});
+  // handover: each person's vendors today against the plan
+  const H = new Map(), H_ = n => H.get(n) || H.set(n, {name:n, nowN:0, nowV:0, newN:0, newV:0, keep:0, gain:0, give:0, seat:''}).get(n);
+  m.sups.forEach(s => { const a = H_(s.nowName), b = H_(s.newName); a.nowN++; a.nowV += s.val; b.newN++; b.newV += s.val; if (s.changes) { a.give++; b.gain++; } else a.keep++; });
+  m.roles.forEach(r => { const h = H_(r.who ? r.who.name : 'New hire'); h.seat = h.seat ? h.seat + ', ' + roleName(r) : roleName(r); });
+  m.managers.forEach(a => { if (H.has(a.name)) H.get(a.name).seat = 'Purchasing manager'; });
+  const hand = [...H.values()].map(h => ({...h, seat:h.seat || (h.nowN ? 'No seat in this plan' : '')}));
+  table('tBShand', [{k:'name', h:'Person'}, {k:'seat', h:'Seat in this plan'}, {k:'nowN', h:'Vendors now', type:'num'}, {k:'nowV', h:'Their PO $ now', type:'money'},
+    {k:'newN', h:'Vendors in the plan', type:'num'}, {k:'newV', h:'PO $ in the plan', type:'money'}, {k:'keep', h:'Keeps', type:'num'},
+    {k:'gain', h:'Takes on', type:'num', html:r => r.gain ? `<b style="color:var(--good)">+${nf(r.gain)}</b>` : '<span class="muted">–</span>'},
+    {k:'give', h:'Hands off', type:'num', html:r => r.give ? `<b style="color:var(--s-aging)">−${nf(r.give)}</b>` : '<span class="muted">–</span>'}],
+    hand, {sortKey:'newV', footId:'fBShand', exportId:'xBShand', exportName:'buyer_structure_handover', onRow:r => filterTable('tBSsup', 'newName', r.name, r.name)});
   const rows = m.branches.map(l => { const r = m.regOf.get(l), role = m.roles.find(x => x.region === r);
-    return {loc:l, name:locName(l), region:r ? r.name : '', ix:r ? r.ix : 0, who:role && role.who ? role.who.name : 'Open role', sups:m.sups.filter(s => s.locs.has(l) && !s.national).length}; });
+    return {loc:l, name:locName(l), region:r ? r.name : '', ix:r ? r.ix : 0, who:role && role.who ? role.who.name : 'New hire', sups:m.sups.filter(s => s.locs.has(l) && s.role.kind === 'reg').length}; });
   table('tBSbr', [{k:'name', h:'Branch'}, {k:'region', h:'Region', filter:'set', html:r => `<select class="bs-regsel" data-loc="${esc(r.loc)}">${m.regs.map(g => `<option value="${g.ix}"${g.ix === r.ix ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`},
-    {k:'who', h:'Regional buyer'}, {k:'sups', h:'Regional suppliers', type:'num'}], rows, {sortKey:'region', sortDir:1, footId:'fBSbr', exportId:'xBSbr', exportName:'buyer_structure_branches'});
+    {k:'who', h:'Regional buyer'}, {k:'sups', h:'Vendors from regional buyers', type:'num'}], rows, {sortKey:'region', sortDir:1, footId:'fBSbr', exportId:'xBSbr', exportName:'buyer_structure_branches'});
   // fit matrix: everyone against every role
   const fm = m.people.map(a => { const o = {name:a.name, grade:a.grade ? a.grade.g + ' ' + Math.round(a.score) : '–', lines:a.lines, soRate:a.soRate, onTime:a.onTime};
     m.roles.forEach((r, i) => { o['r' + i] = Math.round(m.fit.get(a.key + '|' + r.id).fit); }); o.seat = (m.roles.find(r => r.who && r.who.key === a.key) || {}).title || ''; return o; });
@@ -5188,16 +5374,225 @@ function bsTables(m){
 // settings
 (() => {
   const num = (id, k, f = v => +v) => $(id).addEventListener('input', () => { BS[k] = f($(id).value); bsSave(); clearTimeout(num.t); num.t = setTimeout(() => renderTab(), 120); });
+  num('bsExcl', 'excl'); num('bsStrong', 'strong');
   num('bsNatMin', 'natMin'); num('bsMove', 'move'); num('bsCap', 'cap'); num('bsWFam', 'wFam'); num('bsWPerf', 'wPerf'); num('bsWVol', 'wVol'); num('bsSkill', 'skill'); num('bsOverload', 'overload'); num('bsDip', 'dip');
   [['bsNatSpend', 'natSpend', v => +v], ['bsNatBuyers', 'natBuyers', v => +v], ['bsRegions', 'regions', v => +v], ['bsGroupBy', 'groupBy', v => v], ['bsCands', 'cands', v => v]]
     .forEach(([id, k, f]) => $(id).addEventListener('change', () => { BS[k] = f($(id).value); if (k === 'regions' || k === 'groupBy') { BS.regionOf = {}; BS.regionName = {}; } BS.roleWho = {}; bsSave(); renderTab(); }));
   $('bsCash').addEventListener('change', () => { BS.excludeCash = $('bsCash').checked; bsSave(); renderTab(); });
+  $('bsHire').addEventListener('change', () => { BS.hire = $('bsHire').value === '1'; BS.roleWho = {}; bsSave(); renderTab(); });
+  $('bsCrossTo').addEventListener('change', () => { BS.crossTo = $('bsCrossTo').value; bsSave(); renderTab(); });
   $('bsReset').onclick = () => { BS = JSON.parse(JSON.stringify(BS_DEF)); bsSave(); renderTab(); toast('Buyer structure settings reset'); };
   document.addEventListener('change', e => {
     const t = e.target;
     if (t.classList && t.classList.contains('bs-supsel')) { if (t.value) BS.supRole[t.dataset.sid] = t.value; else delete BS.supRole[t.dataset.sid]; bsSave(); renderTab(); }
     if (t.classList && t.classList.contains('bs-regsel')) { BS.regionOf[t.dataset.loc] = +t.value; bsSave(); renderTab(); }
   });
+})();
+
+/* ---- Auto-buy: vendors an automated buyer could handle end to end, and what it would do to each person's workload ---- */
+const AB_SEND = {708:'EDI', 1197:'Email', 2597:'Fax', 3095:'Print', 300:'None'};
+const AB_DEF = {minScore:70, noFreight:80, minLines:24, maxOrder:50, autoShare:80, cap:null, scope:'team', pickBy:'load', allLocs:true};
+let AB = Object.assign({}, AB_DEF, lsGet('ab', {}));
+const abSave = () => lsSet('ab', AB);
+const AB_PARTS = [
+  {k:'freight', label:'No prepaid-freight target', w:25, show:v => pctTxt0(v) + ' of lines', tip:'Share of its PO lines at locations with no prepaid-freight target in P21: any size order ships, so the agent never has to build up an order to a threshold'},
+  {k:'send', label:'How POs reach them', w:20, show:(v, s) => s.send, tip:'EDI can be acknowledged automatically; email can be parsed; fax and print need a person'},
+  {k:'stock', label:'Stock replenishment', w:15, show:v => pctTxt0(v) + ' stocked lines', tip:'Share of lines for stocked items (min/max driven), not one-off or special-order buys'},
+  {k:'touch', label:'POs rarely touched', w:15, show:v => pctTxt0(v) + ' of lines changed', tip:'Quantity changes, expedites and cancels per line (P21 marks most lines as price-edited, so that flag is not counted)'},
+  {k:'onTime', label:'Delivers on time', w:15, show:v => pctTxt0(v), tip:'PO lines received in full by the due date'},
+  {k:'leadCv', label:'Steady lead time', w:10, show:(v, s) => s.leadAvg == null ? '–' : `${nf(s.leadAvg, 0)} ± ${nf(s.leadSd, 0)} days`, tip:'How much the days from order to receipt vary'}];
+const abLin = (v, bad, good) => v == null ? null : Math.max(0, Math.min(1, (v - bad) / (good - bad)));
+
+function abModel(){
+  const rows = (modRows('autobuy_vendors') || []).filter(r => AB.allLocs || (locMeta.get(String(r.location_id)) || {}).type === 'BRANCH');
+  if (!rows.length) return null;
+  const typeOf = l => (locMeta.get(String(l)) || {}).type || 'OTHER';
+  // vendors
+  const V = new Map();
+  rows.forEach(r => {
+    const sid = String(r.supplier_id), v = V.get(sid) || V.set(sid, {sid, name:r.supplier_name, owner:r.supplier_buyer || '', pos:0, lines:0, val:0, canceled:0, stock:0, order:0, edits:0,
+      judged:0, ontime:0, ln:0, ls:0, lq:0, frLines:0, minLines:0, send:AB_SEND[+r.po_method] || 'None', rows:[], writers:new Map(), locs:new Set()}).get(sid);
+    const L = +r.po_lines || 0;
+    v.pos += +r.pos || 0; v.lines += L; v.val += +r.po_value || 0; v.canceled += +r.lines_canceled || 0; v.stock += +r.stock_lines || 0; v.order += +r.order_lines || 0;
+    v.edits += (+r.qty_changes || 0) + (+r.expedites || 0) + (+r.lines_canceled || 0);   // price_edit is set on most lines in P21, so it isn't counted as a touch
+    v.judged += +r.lines_judged || 0; v.ontime += +r.lines_on_time || 0; v.ln += +r.lead_n || 0; v.ls += +r.lead_sum || 0; v.lq += +r.lead_sumsq || 0;
+    if (!(+r.freight_target > 0)) v.frLines += L;
+    if (+r.min_target > 0) v.minLines += L;
+    v.rows.push({...r, type:typeOf(r.location_id)}); v.locs.add(String(r.location_id)); v.writers.set(r.buyer, (v.writers.get(r.buyer) || 0) + L);
+  });
+  const list = [...V.values()].map(v => {
+    const leadAvg = v.ln >= 10 ? v.ls / v.ln : null, leadSd = v.ln >= 10 ? Math.sqrt(Math.max(0, v.lq / v.ln - (v.ls / v.ln) ** 2)) : null;
+    const o = {...v, leadAvg, leadSd, freight:v.lines ? v.frLines / v.lines : null, minShare:v.lines ? v.minLines / v.lines : 0, stockShare:v.lines ? v.stock / v.lines : null,
+      orderShare:v.lines ? v.order / v.lines : 0, touchRate:v.lines ? v.edits / (v.lines + v.canceled) : null, onTimeRate:v.judged >= 20 ? v.ontime / v.judged : null,
+      leadCv:leadAvg ? leadSd / leadAvg : null, linesPerPo:v.pos ? v.lines / v.pos : null, frBranches:new Set(v.rows.filter(r => +r.freight_target > 0).map(r => String(r.location_id))).size};
+    const pt = {freight:o.freight, send:{EDI:1, Email:0.8, None:0.3, Fax:0.2, Print:0.1}[o.send] ?? 0.3, stock:abLin(o.stockShare, 0.2, 0.8), touch:abLin(o.touchRate, 0.08, 0.01),
+      onTime:abLin(o.onTimeRate, 0.55, 0.85), leadCv:abLin(o.leadCv, 0.9, 0.25)};
+    let w = 0, sc = 0; o.parts = AB_PARTS.map(p => { const v = pt[p.k]; if (v != null) { w += p.w; sc += v * p.w; } return {...p, sc:v, v:p.k === 'stock' ? o.stockShare : p.k === 'touch' ? o.touchRate : p.k === 'onTime' ? o.onTimeRate : p.k === 'leadCv' ? o.leadCv : p.k === 'freight' ? o.freight : null}; });
+    o.score = w ? 100 * sc / w : null;
+    o.gates = [];
+    if (/cash vendor/i.test(o.name)) o.gates.push('cash purchases');
+    if (o.lines < AB.minLines) o.gates.push(`only ${nf(o.lines)} lines a year`);
+    if (o.orderShare > AB.maxOrder / 100) o.gates.push(`${pctTxt0(o.orderShare)} of lines are for customer orders or direct ship`);
+    if (o.freight != null && o.freight < AB.noFreight / 100) o.gates.push(`prepaid-freight target at ${nf(o.frBranches)} of ${nf(o.locs.size)} locations`);
+    o.tier = o.gates.length ? (o.gates.length === 1 && /freight/.test(o.gates[0]) && o.score >= AB.minScore - 10 ? 'Needs a freight change' : 'Not a fit')
+      : o.score >= AB.minScore ? 'Ready now' : o.score >= AB.minScore - 15 ? 'Almost' : 'Not a fit';
+    o.auto = o.tier === 'Ready now';
+    const good = o.parts.filter(p => p.sc != null && p.sc >= 0.75).map(p => abWhy(p, o, true)), bad = o.parts.filter(p => p.sc != null && p.sc < 0.4).map(p => abWhy(p, o, false));
+    o.pros = good; o.cons = bad.concat(o.gates.filter(g => !/freight/.test(g) || !bad.some(b => /freight/.test(b))));
+    return o;
+  }).sort((a, b) => (b.auto - a.auto) || (b.score || 0) - (a.score || 0));
+  // people: yearly workload, and what automation takes off it
+  const scored = buyerScoreData();
+  const scoreOf = new Map(scored.map(a => [bscKey(a.name), a]));
+  const appCfg = Object.assign({}, P && P.app, LIVE_APP || {}), mgr = (appCfg.managers || []).map(x => String(x).toUpperCase());
+  const isMgr = n => mgr.some(f => String(n).toUpperCase().includes(f));
+  const autoSet = new Set(list.filter(v => v.auto).map(v => v.sid)), share = AB.autoShare / 100;
+  const PP = new Map();
+  rows.forEach(r => { if (!r.buyer || r.buyer === '(no requester)') return;
+    const p = PP.get(r.buyer) || PP.set(r.buyer, {name:r.buyer, pos:0, lines:0, val:0, autoL:0, vendors:new Set(), autoV:new Set()}).get(r.buyer);
+    const L = +r.po_lines || 0; p.pos += +r.pos || 0; p.lines += L; p.val += +r.po_value || 0; p.vendors.add(String(r.supplier_id));
+    if (autoSet.has(String(r.supplier_id))) { p.autoL += L; p.autoV.add(String(r.supplier_id)); } });
+  const people = [...PP.values()].map(p => { const s = scoreOf.get(bscKey(p.name));
+    return {...p, team:corpBuyer(p.name), mgr:isMgr(p.name), saved:p.autoL * share, left:p.lines - p.autoL * share, nVendors:p.vendors.size, nAuto:p.autoV.size, sc:s}; });
+  const teamYear = people.filter(p => p.team && !p.mgr && p.lines >= 1000).map(p => p.lines).sort((a, b) => a - b);
+  const busy = teamYear.slice(Math.floor(teamYear.length / 2)), capDef = busy.length ? Math.round(sum(busy, x => x) / busy.length / 500) * 500 : 12000;
+  const cap = AB.cap || capDef;
+  people.forEach(p => { p.fte = p.lines / cap; p.fteLeft = p.left / cap; p.cut = p.lines ? p.saved / p.lines : 0; });
+  // headcount: people in scope (the buying team by default, never managers)
+  const pool = people.filter(p => !p.mgr && (AB.scope === 'all' ? p.lines >= 500 : p.team));
+  const graded = bscScore(scored.filter(a => a.team)), gradeOf = new Map(graded.map(a => [bscKey(a.name), a]));
+  pool.forEach(p => { const g = gradeOf.get(bscKey(p.name)); p.grade = g && g.score != null ? g : null; });
+  const fteNow = sum(pool, p => p.fte), fteLeft = sum(pool, p => p.fteLeft);
+  const needNow = Math.max(1, Math.ceil(fteNow - 0.05)), need = Math.max(1, Math.ceil(fteLeft - 0.05));
+  const slackNow = Math.max(0, pool.length - needNow);                       // positions the PO work already doesn't fill today
+  const canCut = Math.max(0, Math.min(pool.length - 1, pool.length - need)), byAuto = Math.max(0, canCut - slackNow);
+  const order = pool.slice().sort((a, b) => AB.pickBy === 'score' ? ((a.grade ? a.grade.score : 101) - (b.grade ? b.grade.score : 101)) : a.left - b.left);
+  const out = order.slice(0, canCut), stay = pool.filter(p => !out.includes(p));
+  // where the people leaving would hand their remaining vendors: whoever already writes most for that vendor, else the least loaded
+  const load = new Map(stay.map(p => [p.name, p.left])), moves = [];
+  out.forEach(p => { rows.filter(r => r.buyer === p.name).reduce((m, r) => m.set(String(r.supplier_id), (m.get(String(r.supplier_id)) || 0) + (+r.po_lines || 0) * (autoSet.has(String(r.supplier_id)) ? 1 - share : 1)), new Map())
+    .forEach((L, sid) => { if (L <= 0) return; const v = V.get(sid), cands = stay.map(s => ({s, w:(v && v.writers.get(s.name)) || 0}));
+      const room = c => load.get(c.s.name) + L <= cap;
+      const best = cands.filter(c => c.w > 0 && room(c)).sort((a, b) => b.w - a.w)[0] || cands.slice().sort((a, b) => load.get(a.s.name) - load.get(b.s.name))[0];
+      if (!best) return; load.set(best.s.name, load.get(best.s.name) + L); moves.push({from:p.name, to:best.s.name, sid, vendor:v ? v.name : sid, L}); }); });
+  stay.forEach(p => { p.after = load.get(p.name); p.fteAfter = p.after / cap; });
+  return {rows, list, V, people, pool, cap, capDef, fteNow, fteLeft, needNow, need, slackNow, byAuto, canCut, out, stay, moves, share, autoSet,
+    autoLines:sum(list.filter(v => v.auto), v => v.lines), allLines:sum(list, v => v.lines), autoPos:sum(list.filter(v => v.auto), v => v.pos)};
+}
+function abWhy(p, o, good){
+  const f = {freight:good ? `no prepaid-freight target at ${nf(o.locs.size - o.frBranches)} of ${nf(o.locs.size)} locations` : `prepaid-freight target at ${nf(o.frBranches)} of ${nf(o.locs.size)} locations`,
+    send:good ? `POs go by ${o.send}${o.send === 'EDI' ? ', so they can be acknowledged automatically' : ''}` : `POs go by ${o.send === 'None' ? 'no set method (phone or portal?)' : o.send}; switch to EDI or email`,
+    stock:good ? `${pctTxt0(o.stockShare)} of lines are stocked-item replenishment` : `only ${pctTxt0(o.stockShare)} of lines are for stocked items`,
+    touch:good ? `only ${pctTxt0(o.touchRate)} of lines changed, expedited or canceled` : `${pctTxt0(o.touchRate)} of lines changed, expedited or canceled`,
+    onTime:good ? `${pctTxt0(o.onTimeRate)} of lines on time` : `only ${pctTxt0(o.onTimeRate)} of lines on time`,
+    leadCv:good ? `lead time steady at ${nf(o.leadAvg, 0)} ± ${nf(o.leadSd, 0)} days` : `lead time varies a lot (${nf(o.leadAvg, 0)} ± ${nf(o.leadSd, 0)} days)`};
+  return f[p.k];
+}
+
+function renderAutoBuy(){
+  $('abNotice').innerHTML = modNotice(['autobuy_vendors']);
+  const m = abModel();
+  if (!m) { story('st_ab', ['No 12-month PO detail by vendor yet. Click Refresh data to run the autobuy_vendors query.']); $('abBody').hidden = true; return; }
+  $('abBody').hidden = false;
+  const setV = (id, v) => { const el = $(id); if (el && document.activeElement !== el) el.value = v; };
+  [['abMinScore', 'minScore', ''], ['abNoFreight', 'noFreight', '%'], ['abMaxOrder', 'maxOrder', '%'], ['abAutoShare', 'autoShare', '%'], ['abMinLines', 'minLines', '']].forEach(([id, k, u]) => { setV(id, AB[k]); $(id + 'V').textContent = AB[k] + u; });
+  setV('abCap', m.cap); $('abCapV').textContent = nf(m.cap); setV('abScope', AB.scope); setV('abPickBy', AB.pickBy); $('abAllLocs').checked = AB.allLocs;
+  const ready = m.list.filter(v => v.auto), almost = m.list.filter(v => v.tier === 'Almost' || v.tier === 'Needs a freight change');
+  const saved = sum(m.pool, p => p.saved), teamL = sum(m.pool, p => p.lines);
+  const frFix = m.list.filter(v => v.tier === 'Needs a freight change');
+  story('st_ab', (isMgrView() ? x => x : x => x.slice(0, 1))([
+    `${B(nf(ready.length))} vendors look ready for an automated buyer: ${B(nf(Math.round(m.autoLines)))} PO lines and ${nf(Math.round(m.autoPos))} POs a year (${pct(m.autoLines, m.allLines)} of all lines). They score ${AB.minScore}+ on freight, how POs reach them, stock replenishment, how rarely POs get touched, and delivery. Another ${B(nf(almost.length))} are close. The biggest lever is freight: ${B(nf(frFix.length))} vendors fail only on their prepaid-freight targets, and dropping or lowering those would add ${B(nf(Math.round(sum(frFix, v => v.lines))))} lines a year (${frFix.slice().sort((x, y) => y.lines - x.lines).slice(0, 3).map(v => esc(v.name)).join(', ')}…).`,
+    `If the agent handles ${AB.autoShare}% of those lines with no one touching them, the buying team saves about ${B(nf(Math.round(saved)))} PO lines a year (${pct(saved, teamL)} of its work), roughly ${B(nf(saved / m.cap, 1) + ' full-time buyers')} at ${nf(m.cap)} lines each.`,
+    `Today the ${AB.scope === 'all' ? 'buying team and branch writers' : 'buying team'}'s PO work comes to ${B(nf(m.fteNow, 1))} full-time loads for ${m.pool.length} people${m.slackNow ? ` — already ${m.slackNow} position${m.slackNow > 1 ? 's' : ''} of slack before any automation, because ${m.pool.slice().sort((x, y) => x.lines - y.lines)[0] ? esc(m.pool.slice().sort((x, y) => x.lines - y.lines)[0].name) + ' writes far fewer lines than the rest' : 'some loads are light'}` : ''}. With auto-buy it would be ${B(nf(m.fteLeft, 1))}. ${m.byAuto ? `That frees ${B(m.byAuto + ' more position' + (m.byAuto > 1 ? 's' : ''))} on top.` : `Auto-buy on its own frees ${B('no full position')} yet; it frees ${nf(m.fteNow - m.fteLeft, 2)} of one.`}${m.canCut ? ` In total ${m.canCut} position${m.canCut > 1 ? 's' : ''} could be absorbed: ${m.out.map(p => B(esc(p.name))).join(' and ')} (${AB.pickBy === 'score' ? 'lowest scorecard' : 'least work left after automation'}). Treat this as a capacity estimate to test with a pilot, not a decision; buyers do more than write POs.` : ''}`]));
+  $('abStats').innerHTML =
+    stat('Vendors ready now', nf(ready.length), `${nf(almost.length)} more are close`) +
+    stat('Lines a year on ready vendors', nf(Math.round(m.autoLines)), `${pct(m.autoLines, m.allLines)} of all PO lines · ${nf(Math.round(m.autoPos))} POs`) + (!isMgrView() ? '' :
+    stat('Buying-team work saved', pct(saved, teamL), `${nf(Math.round(saved))} lines a year · ${nf(saved / m.cap, 1)} full-time buyers`, 'good') +
+    stat('Positions freed by auto-buy', nf(m.byAuto), `${nf(m.fteNow - m.fteLeft, 2)} of a full load saved${m.slackNow ? ` · plus ${m.slackNow} of slack today` : ''}`, m.byAuto ? 'good' : '') +
+    stat('Positions that could be absorbed', nf(m.canCut), m.canCut ? m.out.map(p => esc(p.name)).join(', ') : `${nf(m.fteLeft, 1)} loads of work for ${m.pool.length} people`, m.canCut ? 'warn' : ''));
+  // chart: the biggest wins
+  chartDefaults();
+  const top = m.list.filter(v => v.tier !== 'Not a fit').sort((a, b) => b.lines * (b.auto ? 1 : 0.5) - a.lines * (a.auto ? 1 : 0.5)).slice(0, 20);
+  const TC = {'Ready now':css('--s-active'), 'Almost':css('--s-corp'), 'Needs a freight change':css('--s-aging')};
+  $('abTopBox').style.height = Math.max(220, top.length * 26 + 60) + 'px';
+  make('cABtop', hbarCfg(top.map(v => v.name.length > 34 ? v.name.slice(0, 33) + '…' : v.name), top.map(v => v.lines), top.map(v => TC[v.tier]), x => nf(x), 'PO lines a year'));
+  DRILL.cABtop = i => abOpenVendor(top[i], m); TFILT.cABtop = DRILL.cABtop;
+  // candidates table
+  table('tAB', [
+    {k:'name', h:'Vendor'}, {k:'tier', h:'Status', filter:'set', html:r => `<span class="pill" style="--c:${TC[r.tier] || css('--s-other')}"><i></i>${r.tier}</span>`},
+    {k:'score', h:'Score', type:'num', get:r => r.score == null ? null : Math.round(r.score)},
+    {k:'whyTxt', h:'Why', get:r => (r.auto ? r.pros : r.cons).slice(0, 2).join('; '), html:r => `<span class="muted">${esc((r.auto ? r.pros : r.cons.length ? r.cons : r.pros).slice(0, 2).join('; '))}</span>`, cls:'desc'},
+    {k:'pos', h:'POs / yr', type:'num'}, {k:'lines', h:'Lines / yr', type:'num'}, {k:'val', h:'PO $ / yr', type:'money'}, {k:'linesPerPo', h:'Lines per PO', type:'num1'},
+    {k:'nLocs', h:'Locations', type:'num', get:r => r.locs.size}, {k:'freight', h:'Lines with no freight target', type:'pct'}, {k:'send', h:'PO method', filter:'set'},
+    {k:'stockShare', h:'Stocked lines', type:'pct'}, {k:'touchRate', h:'Lines touched', type:'pct'}, {k:'onTimeRate', h:'On time', type:'pct'},
+    {k:'leadTxt', h:'Lead time', get:r => r.leadAvg == null ? '' : `${nf(r.leadAvg, 0)} ± ${nf(r.leadSd, 0)} d`},
+    {k:'ownerTxt', h:'P21 buyer', filter:'set', get:r => r.owner ? bscName(r.owner) : ''},
+    {k:'writersTxt', h:'Who writes the POs', get:r => [...r.writers.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, L]) => `${n} (${nf(L)})`).join(', ')}
+  ], m.list, {sortKey:'lines', footId:'fAB', exportId:'xAB', exportName:'autobuy_vendors', onRow:r => abOpenVendor(r, m), hidden:['linesPerPo', 'leadTxt', 'ownerTxt'],
+    summary:s => `${nf(s.filter(v => v.auto).length)} ready now · ${nf(Math.round(sum(s.filter(v => v.auto), v => v.lines)))} of ${nf(Math.round(sum(s, v => v.lines)))} lines`});
+  // people
+  const ppl = m.people.filter(p => p.lines >= 50).sort((a, b) => b.lines - a.lines);
+  $('abPeopleBox').style.height = Math.max(240, Math.min(ppl.length, 25) * 24 + 70) + 'px';
+  const pp = ppl.slice(0, 25);
+  make('cABpeople', {type:'bar', data:{labels:pp.map(p => p.name), datasets:[
+      {label:'Work left', data:pp.map(p => Math.round(p.left)), backgroundColor:pp.map(p => p.team ? css('--accent') : CAT[1])},
+      {label:'Taken by the auto-buyer', data:pp.map(p => Math.round(p.saved)), backgroundColor:css('--s-active')}]},
+    options:{indexAxis:'y', maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', axis:'y', intersect:false},
+      scales:{x:{stacked:true, ticks:{callback:x => nf(x)}, title:{display:true, text:'PO lines a year'}}, y:{stacked:true, grid:{display:false}, ticks:{color:css('--ink'), autoSkip:false}}},
+      plugins:{legend:{position:'top', align:'start'}, tooltip:{callbacks:{label:c => ` ${c.dataset.label}: ${nf(c.raw)} lines`, footer:i => { const p = pp[i[0].dataIndex]; return `${nf(p.fte, 2)} → ${nf(p.fteLeft, 2)} full-time · ${p.team ? 'buying team' : 'branch'}`; }}}}},
+    plugins:[{id:'abCap', afterDatasetsDraw(ch){ const x = ch.scales.x.getPixelForValue(m.cap), a = ch.chartArea, ctx = ch.ctx; if (x < a.left || x > a.right) return;
+      ctx.save(); ctx.strokeStyle = css('--bad'); ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = css('--bad'); ctx.font = '11px ' + css('--font'); ctx.fillText('one full-time buyer', x + 4, a.top + 10); ctx.restore(); }}]});
+  DRILL.cABpeople = i => abOpenPerson(pp[i], m); TFILT.cABpeople = DRILL.cABpeople;
+  table('tABp', [{k:'name', h:'Person'}, {k:'group', h:'Group', filter:'set', get:p => p.mgr ? 'Manager' : p.team ? 'Buying team' : 'Branch'},
+    {k:'pos', h:'POs / yr', type:'num'}, {k:'lines', h:'Lines / yr', type:'num'}, {k:'val', h:'PO $ / yr', type:'money'}, {k:'fte', h:'Full-time now', type:'num1', get:p => Math.round(p.fte * 100) / 100},
+    {k:'nVendors', h:'Vendors', type:'num'}, {k:'nAuto', h:'Of them ready for auto-buy', type:'num'}, {k:'autoL', h:'Lines on those vendors', type:'num'},
+    {k:'saved', h:'Lines taken off', type:'num', get:p => Math.round(p.saved)}, {k:'cut', h:'Workload cut', type:'pct'}, {k:'left', h:'Lines left', type:'num', get:p => Math.round(p.left)},
+    {k:'fteLeft', h:'Full-time after', type:'num1', get:p => Math.round(p.fteLeft * 100) / 100}],
+    m.people.filter(p => p.lines >= 1), {sortKey:'lines', footId:'fABp', exportId:'xABp', exportName:'autobuy_workload', onRow:p => abOpenPerson(p, m),
+      summary:s => `${nf(s.length)} people · ${nf(Math.round(sum(s, p => p.lines)))} lines a year → ${nf(Math.round(sum(s, p => p.left)))} left`});
+  // headcount
+  $('abHead').innerHTML = `<div class="bs-svc">
+      <div><span class="k-label">Full-time buyers of work, ${AB.scope === 'all' ? 'team + branch writers' : 'buying team'}</span><b>${nf(m.fteNow, 1)} → ${nf(m.fteLeft, 1)}</b><span class="muted">${m.pool.length} people today · ${nf(m.cap)} lines each</span></div>
+      <div><span class="k-label">Positions: slack today + freed by auto-buy</span><b>${nf(m.slackNow)} + ${nf(m.byAuto)} = ${nf(m.canCut)}</b><span class="muted">${m.canCut ? 'picked by ' + (AB.pickBy === 'score' ? 'lowest scorecard' : 'least work left') : 'not with these settings'}</span></div>
+      <div><span class="k-label">Busiest remaining person</span><b>${pctTxt0(Math.max(0, ...m.stay.map(p => p.fteAfter || 0)))}</b><span class="muted">of a full load after taking on the handed-off vendors</span></div></div>
+    ${m.canCut ? `<div class="bs-step"><h4>Who, and where their vendors would go</h4><ul>${m.out.map(p => { const mv = m.moves.filter(x => x.from === p.name), by = topBy(mv, x => x.to, x => x.L);
+      return `<li><b>${esc(p.name)}</b>: ${nf(Math.round(p.lines))} lines a year today, ${nf(Math.round(p.left))} left after automation${p.grade ? ` (scorecard ${p.grade.grade.g} ${Math.round(p.grade.score)})` : ''}. Their ${nf(mv.length)} remaining vendors go to ${by.map(([n, L]) => `${esc(n)} (${nf(Math.round(L))} lines)`).join(', ')}, mostly people who already write POs for those vendors.</li>`; }).join('')}</ul></div>
+      <div class="bs-step"><h4>Everyone remaining</h4><ul>${m.stay.sort((a, b) => b.after - a.after).map(p => `<li>${esc(p.name)}: ${nf(Math.round(p.lines))} → ${nf(Math.round(p.after))} lines a year (${pctTxt0(p.fteAfter)} of a full load${p.fte > 1 ? '; already over a full load today' : ''})</li>`).join('')}</ul></div>` : ''}
+    <div class="bs-step bs-risk"><h4>Before acting on this</h4><ul><li>Pilot the agent on 5–10 ready vendors at a few branches for 60–90 days and measure what share of their POs truly needed no one, then set "Lines the agent handles alone" to that.</li>
+      <li>Buyers do more than write POs (expediting, vendor issues, returns, pricing). This counts only PO lines, so leave headroom before removing a position.</li>
+      <li>Fixing freight targets and moving vendors to EDI or email grows the ready list: see the "Almost" and "Needs a freight change" vendors.</li></ul></div>`;
+}
+function abOpenVendor(v, m){
+  if (!v) return;
+  const byLoc = new Map(); v.rows.forEach(r => { const k = String(r.location_id), a = byLoc.get(k) || byLoc.set(k, {loc:k, name:locName(k), type:r.type, pos:0, lines:0, val:0, writers:new Map(), freight:+r.freight_target || 0, fc:r.freight_control, min:+r.min_target || 0, mc:r.min_control, judged:0, ontime:0}).get(k);
+    a.pos += +r.pos || 0; a.lines += +r.po_lines || 0; a.val += +r.po_value || 0; a.judged += +r.lines_judged || 0; a.ontime += +r.lines_on_time || 0; a.writers.set(r.buyer, (a.writers.get(r.buyer) || 0) + (+r.po_lines || 0)); });
+  const locs = [...byLoc.values()].map(a => ({...a, writersTxt:[...a.writers.entries()].sort((x, y) => y[1] - x[1]).map(([n, L]) => `${n} (${nf(L)})`).join(', '), onTime:a.judged ? a.ontime / a.judged : null,
+    freightTxt:a.freight > 0 ? `${a.fc === 'DOLLARS' ? '$' + nf(a.freight) : nf(a.freight) + ' ' + String(a.fc || '').toLowerCase()}` : 'None', minTxt:a.min > 0 ? `${a.mc === 'DOLLARS' ? '$' + nf(a.min) : nf(a.min) + ' ' + String(a.mc || '').toLowerCase()}` : 'None'})).sort((a, b) => b.lines - a.lines);
+  openDrill({title:v.name, sub:`${v.tier} · score ${v.score == null ? '–' : Math.round(v.score)} · last 12 months`,
+    facts:[['POs a year', nf(v.pos)], ['Lines a year', nf(v.lines)], ['PO $ a year', compact(v.val)], ['Locations', nf(v.locs.size)], ['PO method', v.send], ['P21 buyer', v.owner ? bscName(v.owner) : '–']],
+    note:`<h4>Why</h4><ul>${v.pros.map(x => `<li>✔ ${esc(x)}</li>`).join('')}${v.cons.map(x => `<li>✖ ${esc(x)}</li>`).join('')}</ul>`,
+    chart:{title:'PO lines a year by location', cfg:hbarCfg(locs.map(a => a.name), locs.map(a => a.lines), locs.map(a => a.freight > 0 ? css('--s-aging') : css('--s-active')), x => nf(x)), sub:'green = no prepaid-freight target, amber = has one', height:Math.max(160, locs.length * 24 + 50)},
+    table:{title:'By location and who buys it now', rows:locs, sortKey:'lines', exportName:'autobuy_' + v.sid,
+      cols:[{k:'name', h:'Location'}, {k:'type', h:'Type', filter:'set'}, {k:'pos', h:'POs', type:'num'}, {k:'lines', h:'Lines', type:'num'}, {k:'val', h:'PO $', type:'money'},
+        {k:'freightTxt', h:'Prepaid-freight target'}, {k:'minTxt', h:'PO minimum'}, {k:'onTime', h:'On time', type:'pct'}, {k:'writersTxt', h:'Who writes the POs', cls:'desc'}]}});
+}
+function abOpenPerson(p, m){
+  if (!p) return;
+  const vs = m.list.filter(v => v.writers.has(p.name)).map(v => ({...v, mine:v.writers.get(p.name)})).sort((a, b) => b.mine - a.mine);
+  openDrill({title:p.name, sub:`${p.mgr ? 'Purchasing manager' : p.team ? 'Buying team' : 'Branch'} · last 12 months`,
+    facts:[['Lines a year', nf(p.lines)], ['POs a year', nf(p.pos)], ['Full-time now', nf(p.fte, 2)], ['Taken by auto-buy', nf(Math.round(p.saved))], ['Workload cut', pctTxt0(p.cut)], ['Full-time after', nf(p.fteLeft, 2)]],
+    table:{title:'Their vendors', rows:vs, sortKey:'mine', exportName:'autobuy_person', onRow:v => abOpenVendor(m.V.get(v.sid) && m.list.find(x => x.sid === v.sid), m),
+      cols:[{k:'name', h:'Vendor'}, {k:'tier', h:'Status', filter:'set'}, {k:'score', h:'Score', type:'num', get:r => r.score == null ? null : Math.round(r.score)}, {k:'mine', h:'Their lines / yr', type:'num'},
+        {k:'lines', h:'All lines / yr', type:'num'}, {k:'send', h:'PO method', filter:'set'}, {k:'freight', h:'No freight target', type:'pct'}]}});
+}
+(() => {
+  const num = (id, k) => $(id).addEventListener('input', () => { AB[k] = +$(id).value; abSave(); clearTimeout(num.t); num.t = setTimeout(() => renderTab(), 120); });
+  num('abMinScore', 'minScore'); num('abNoFreight', 'noFreight'); num('abMaxOrder', 'maxOrder'); num('abAutoShare', 'autoShare'); num('abMinLines', 'minLines'); num('abCap', 'cap');
+  $('abScope').addEventListener('change', () => { AB.scope = $('abScope').value; abSave(); renderTab(); });
+  $('abPickBy').addEventListener('change', () => { AB.pickBy = $('abPickBy').value; abSave(); renderTab(); });
+  $('abAllLocs').addEventListener('change', () => { AB.allLocs = $('abAllLocs').checked; abSave(); renderTab(); });
+  $('abReset').onclick = () => { AB = Object.assign({}, AB_DEF); abSave(); renderTab(); toast('Auto-buy settings reset'); };
 })();
 
 /* ---- Min / max changes ---- */
@@ -5599,10 +5994,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(
 let defaults = null, polling = null;
 // hidden sample mode: Ctrl+Alt+D or five quick clicks on the logo. The server then answers from data_demo/ (made-up data).
 let SAMPLE = false;
-try { SAMPLE = localStorage.getItem('dataMode') === 'sample'; } catch {}
+try { SAMPLE = !EMBED && localStorage.getItem('dataMode') === 'sample'; } catch {}
 const withMode = path => SAMPLE ? path + (path.includes('?') ? '&' : '?') + 'mode=sample' : path;
 function toggleSample(){
-  if (STATIC) return;
+  if (STATIC || EMBED) return;
   try { if (SAMPLE) localStorage.removeItem('dataMode'); else localStorage.setItem('dataMode', 'sample'); } catch { return; }
   location.reload();
 }
@@ -5610,6 +6005,12 @@ document.addEventListener('keydown', e => { if (e.ctrlKey && e.altKey && !e.shif
 { let clicks = []; document.querySelector('.brand .mark').addEventListener('click', () => { const t = Date.now(); clicks = clicks.filter(x => t - x < 2000).concat(t); if (clicks.length >= 5) { clicks = []; toggleSample(); } }); }
 async function api(path, opts){
   opts = {...(opts || {})};
+  if (EMBED) {   // the hub adds the sign-in token; parse here so the data lives in this page
+    const r = await EMBED.api(path, opts);
+    let body = {}; try { body = JSON.parse(r.text); } catch {}
+    if (r.status >= 400) throw Object.assign(new Error(body.error || body.message || 'Request failed (' + r.status + ')'), {status:r.status});
+    return body;
+  }
   if (SAMPLE) opts.headers = {...(opts.headers || {}), 'X-Data-Mode':'sample'};
   const r = await fetch(path, opts);
   const body = await r.json().catch(() => ({}));
@@ -5734,7 +6135,23 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if
     setData(emb.payload, emb.history);
     return;
   }
-  api('/api/config').then(c => defaults = c.defaults).catch(() => {});
+  if (EMBED) {
+    document.body.classList.add('embed');
+    window.IH = {
+      setSection: sec => applySection(sec),
+      setTheme: t => { document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; syncThemeBtn(); if (P) render(); }};
+    if (EMBED.theme) window.IH.setTheme(EMBED.theme());
+    try { LIVE_APP = (await api('/api/config')).app || null; } catch {}
+    applySection(EMBED.section && EMBED.section());
+    try { await loadServerData(); }
+    catch (ex) {
+      $('meta').textContent = 'No data loaded';
+      $('emptyMsg').textContent = ex.message;
+      $('empty').hidden = false;
+    }
+    return;
+  }
+  api('/api/config').then(c => { defaults = c.defaults; LIVE_APP = c.app || null; if (S.tab === 'structure' && P) renderTab(); }).catch(() => {});
   try {
     await loadServerData();
   } catch (ex) {

@@ -49,6 +49,7 @@ SAMPLE_DIR = ROOT / "data_demo"                  # made-up dataset for the hidde
 # Per-dashboard settings ([app] and [locations] in the config file). Defaults = the Abatix dashboard.
 APP = {"title": "Inventory Health", "tagline": "Purchasing analytics",
        "corp_buyers": ["ZEVELY", "GAMBRELL", "RITTER", "MCCARDELL", "LUND", "LEER"],
+       "managers": ["GAMBRELL"],
        "feedback_email": "michael.gambrell@abatix.com"}
 INSTANCE_LOCS = None   # list of {"location_id","location_name","loc_type"} when the config defines [locations]
 
@@ -106,6 +107,8 @@ def apply_instance(cfg):
         APP["feedback_email"] = fb
     if team:
         APP["corp_buyers"] = [t.strip().upper() for t in team.split(",") if re.fullmatch(r"[A-Za-z .'-]+", t.strip())]
+    if cfg.has_section("purchasing") and cfg.has_option("purchasing", "managers"):   # blank = nobody excluded
+        APP["managers"] = [t.strip().upper() for t in cfg.get("purchasing", "managers").split(",") if re.fullmatch(r"[A-Za-z .'-]+", t.strip())]
     if cfg.has_section("locations"):
         locs = []
         for k, v in cfg.items("locations"):

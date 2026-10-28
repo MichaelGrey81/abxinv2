@@ -775,6 +775,21 @@ def build(today: dt.date | None = None, seed: int = 11):
     mod("branch_purchasing", ["location_id", "buyer", "pos", "po_lines", "po_value", "stock_lines", "direct_lines", "lines_judged", "lines_on_time",
                               "stk_then_lines", "stk_then_val", "ns_cust_lines", "ns_cust_val", "ns_demand_lines", "ns_demand_val", "ns_shelf_lines", "ns_shelf_val",
                               "became_stk_lines", "became_stk_val", "dropped_stk_lines", "dropped_stk_val"], BP)
+    # 12 months by supplier, location and writer, with what makes a vendor easy to auto-buy
+    AB = []
+    sprof = {x["id"]: {"m": r.choices([1197, 708, 300, 2597], [0.8, 0.08, 0.1, 0.02])[0], "fr": r.random() < 0.55, "stk": r.uniform(0.2, 0.95),
+                       "ord": r.uniform(0.02, 0.6), "chg": r.uniform(0.005, 0.07)} for x in sups}
+    for sid, sname, loc, n, sb, pos, sl, sv, sj, sot in SBB:
+        pf, LL = sprof[sid], sl * 2
+        fr = r.choice([500, 750, 1000, 1500, 2500]) if pf["fr"] and r.random() < 0.9 else 0
+        ln = round(LL * 0.9); lead = r.uniform(4, 18)
+        AB.append([sid, sname, loc, n, sb, pos * 2, LL, round(sv * 2, 2), round(LL * r.uniform(0, 0.03)), round(LL * pf["stk"]), round(LL * pf["ord"]),
+                   round(LL * r.uniform(0.3, 0.9)), round(LL * pf["chg"]), round(LL * r.uniform(0, 0.01)), round(LL * 0.92), round(LL * 0.92 * r.uniform(0.55, 0.9)),
+                   ln, round(ln * lead), round(ln * (lead * lead + (lead * r.uniform(0.15, 0.7)) ** 2)), "DOLLARS", fr, "DOLLARS", r.choice([0, 0, 0, 250, 500]),
+                   r.choice([7, 14, 14, 21]), None, None, None, pf["m"], 0])
+    mod("autobuy_vendors", ["supplier_id", "supplier_name", "location_id", "buyer", "supplier_buyer", "pos", "po_lines", "po_value", "lines_canceled", "stock_lines",
+                            "order_lines", "price_edits", "qty_changes", "expedites", "lines_judged", "lines_on_time", "lead_n", "lead_sum", "lead_sumsq",
+                            "freight_control", "freight_target", "min_control", "min_target", "review_cycle", "edi_po", "email_po", "fax_po", "po_method", "min_po_cost"], AB)
     mod("supplier_branch_buying", ["supplier_id", "supplier_name", "location_id", "buyer", "supplier_buyer", "pos", "po_lines", "po_value", "lines_judged", "lines_on_time"], SBB)
     mod("branch_nonstock_items", ["location_id", "item_id", "item_desc", "po_lines", "pos", "po_value", "qty", "cust_lines", "demand_lines", "no_demand_lines",
                                   "no_demand_value", "buyers", "last_buyer", "last_po_date", "stocked_now", "sold_lines_180d", "customers_180d"], NSI)

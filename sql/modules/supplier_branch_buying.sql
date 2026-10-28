@@ -29,7 +29,7 @@ JOIN dbo.supplier s       ON s.supplier_id = ph.supplier_id
 LEFT JOIN dbo.contacts c  ON c.id = ph.requested_by
 LEFT JOIN dbo.contacts sb ON sb.id = s.buyer_id
 WHERE ph.company_no = @CompanyId
-  AND ph.location_id IN (10000,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
+  AND ph.location_id IN (10000,10500,11000,11500,12000,20000,21000,30000,30100,31000,31500,40000,50000,70000,71000)
   AND ph.order_date >= @Start
   AND ph.delete_flag = 'N' AND pl.delete_flag = 'N' AND pl.cancel_flag = 'N'
   AND pl.qty_ordered > 0

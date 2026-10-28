@@ -64,6 +64,7 @@ INSERT INTO #locs (location_id, location_name, is_corp) VALUES
  (700,   'Corp Jacksonville', 1),
  (710,   'Corp Atlanta',      1),
  (10000, 'Dallas',            0),
+ (10500, 'Austin',            0),
  (11000, 'Houston',           0),
  (11500, 'San Antonio',       0),
  (12000, 'Baton Rouge',       0),
