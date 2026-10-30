@@ -329,6 +329,19 @@ th.sortable:hover .tt-sort.ghost{opacity:.8}
 #tabs .nav-label{padding:16px 10px 6px}
 #tabs .nav-label:first-child{padding-top:4px}
 .opps.stats{margin-bottom:16px}
+.uv-dots{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
+.uv-dots i{width:6px;height:10px;border-radius:2px;background:var(--line)}
+.uv-dots i.on{background:var(--s-slow)}
+.snapshot [data-open-br],.snapshot #soMode [data-v="buyer"],.snapshot #sideFoot{display:none}
+.sc-ctl{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)}
+.sc-ctl input{width:56px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
+.sc-actions{gap:10px;margin-top:-4px}
+.sc-actions label{font-size:12.5px;color:var(--ink2);display:inline-flex;gap:6px;align-items:center}
+input.sc-pick{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+.scm-stats{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:6px 0 16px}
+.scm-h{margin:18px 0 8px;font-size:14px;font-weight:650}
+.scm-find{margin:0;padding:12px 16px 12px 32px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius-sm);display:grid;gap:8px;font-size:13px;line-height:1.5;color:var(--ink2)}
+.scm-find b{color:var(--ink);font-weight:600}
 .opp.static{cursor:default;position:relative;overflow:hidden}
 .opp.static:hover{transform:none;border-color:var(--line);box-shadow:var(--shadow)}
 .opp.static::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
@@ -454,6 +467,8 @@ body.no-mgr #abGrid{grid-template-columns:1fr}
       <div class="nav-label">Purchasing</div>
       <button data-tab="onorder"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 8H6.2'/></svg><span>On order</span><span class="count" id="nOO"></span></button>
       <button data-tab="returns"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M9 14 4 9l5-5'/><path d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/></svg><span>Returns</span><span class="count" id="nRT"></span></button>
+      <button data-tab="stockcand"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='m21 8-9-5-9 5 9 5 9-5Z'/><path d='M3 8v8l9 5 9-5V8'/><path d='M12 13v8'/></svg><span>Stocking candidates</span><span class="count" id="nSC"></span></button>
+      <button data-tab="overmax"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M3 20h18'/><path d='M6 16V9'/><path d='M11 16V5'/><path d='M16 16v-6'/><path d='M3 8h18' stroke-dasharray='3 3'/></svg><span>Usage over max</span><span class="count" id="nUV"></span></button>
       <button data-tab="buyers"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/></svg><span>Buyer scorecard</span></button>
       <button data-tab="minmax"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M4 6h10M4 12h16M4 18h7'/><circle cx='17' cy='6' r='2'/><circle cx='14' cy='18' r='2'/></svg><span>Min/max changes</span><span class="count" id="nMM"></span></button>
       <button data-tab="costs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d='M12 3v18'/><path d='M17 7.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2 2.7 5 3.5 5 1.6 5 3.5-2.2 3-5 3-5-1.1-5-3'/></svg><span>Cost changes</span><span class="count" id="nCC"></span></button>
@@ -653,6 +668,50 @@ body.no-mgr #abGrid{grid-template-columns:1fr}
       </div>
     </section>
 
+    <section data-panel="stockcand" hidden>
+      <div class="card story" id="st_stockcand"></div>
+      <div id="scNotice"></div>
+      <div class="opps stats" id="scStats"></div>
+      <div class="card">
+        <div class="tablehead"><h3>Non-stock items to consider stocking</h3><span class="sp"></span>
+          <label class="sc-ctl" title="Months with usage out of the last 12 completed months">Usage in at least <input type="number" id="scMonths" min="1" max="12" step="1"> of 12 months</label>
+          <label class="sc-ctl" title="Months with usage out of the last 3">and <input type="number" id="scLast3" min="0" max="3" step="1"> of the last 3</label>
+          <label class="sc-ctl" title="Different customers who ordered it in 12 months">Customers at least <input type="number" id="scCust" min="0" step="1"></label>
+          <label class="sc-ctl" title="Leave out items whose order lines were mostly direct ship or special order">Direct ship / special at most <input type="number" id="scDirect" min="0" max="100" step="5">%</label>
+        </div>
+        <div class="tablehead sc-actions">
+          <button class="btn sm" id="scAll">Select all shown</button><button class="btn sm" id="scNone">Clear selection</button>
+          <label><input type="checkbox" id="scOnlySel"> Show selected only</label>
+          <span class="sp"></span><span class="muted" id="scSelInfo"></span>
+          <button class="btn sm primary" id="scExport" title="One tab-delimited .txt per branch: item, then Y, no header">Export for P21 (.txt)</button>
+          <button class="btn sm" id="xSC">Export CSV</button></div>
+        <p class="note">Non-stock item-locations (stockable N) at the branches with usage in the last 12 completed months. Usage is what shipped from the branch's stock, by month, oldest first in the trend. Steadiness is how much monthly usage swings: steady under 0.5 (coefficient of variation), variable under 1, lumpy above. Customers, orders and sales are customer order lines over the same 12 months; direct ship / special is the share of those lines that never touched stock. <b>Export for P21</b> writes one file per branch, <code>stockable_&lt;location&gt;.txt</code>, each line the item ID, a tab, and Y, with no header, for import. Making an item stockable doesn't set its min and max: set those too, or it won't reorder.</p>
+        <div class="tablewrap"><table id="tSC"></table></div>
+        <div class="tablefoot"><span class="muted" id="fSC"></span><div class="tt-pager"></div></div>
+      </div>
+    </section>
+
+    <section data-panel="overmax" hidden>
+      <div class="card story" id="st_overmax"></div>
+      <div id="uvNotice"></div>
+      <div class="opps stats" id="uvStats"></div>
+      <div class="grid">
+        <div class="card"><h3>How often items beat their max</h3><p class="sub">Item-locations by the number of the last 12 months their usage was above the max (OP + OQ for OP/OQ) as it was that month. Click a bar to filter the table.</p><div class="chartbox" style="height:260px"><canvas id="cUVdist"></canvas></div></div>
+        <div class="card"><h3>By branch</h3><p class="sub">Item-locations regularly over max · click to filter the table.</p><div class="chartbox" style="height:260px"><canvas id="cUVloc"></canvas></div></div>
+        <div class="card wide"><h3>Suppliers with the most items over max</h3><p class="sub">Top 15 by item-locations · bar = items, label = stockouts on them in 180 days · click to filter the table.</p><div class="chartbox" style="height:340px"><canvas id="cUVsup"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="tablehead"><h3>Items whose usage regularly outpaces the max</h3><span class="sp"></span>
+          <label class="sc-ctl" title="Months out of the last 12 when usage was above the max as it was that month">Over max in at least <input type="number" id="uvMin" min="1" max="12" step="1"> of 12 months</label>
+          <label class="sc-ctl" title="Months out of the last 3 when usage was above the max">and <input type="number" id="uvLast" min="0" max="3" step="1"> of the last 3</label>
+          <label class="sc-ctl"><input type="checkbox" id="uvHideRaised"> Hide items already raised to the suggestion</label>
+          <button class="btn sm" id="xUV">Export CSV</button></div>
+        <p class="note">Usage is what shipped from the branch's stock each month (last 12 completed months). The max is the one in place at each month end (OP + OQ for OP/OQ), from the inv_loc audit trail, so a later change doesn't hide the past. <b>Suggested max</b> is the 75th percentile of the 12 months' usage (OQ = that level minus the OP for OP/OQ items); <b>added value</b> is the increase at today's cost. Stockouts are the last 180 days. Click a row for its month-by-month history.</p>
+        <div class="tablewrap"><table id="tUV"></table></div>
+        <div class="tablefoot"><span class="muted" id="fUV"></span><div class="tt-pager"></div></div>
+      </div>
+    </section>
+
     <section data-panel="suppliers" hidden>
       <div class="card story" id="st_suppliers"></div>
       <div id="spNotice"></div>
@@ -735,6 +794,23 @@ body.no-mgr #abGrid{grid-template-columns:1fr}
         <div class="card wide"><h3>Stockouts by ABC class</h3><p class="sub">Grouped by the first letter of the P21 ABC class, stacked by root cause. Click a bar to see the stocked-out items in that class.</p><div class="chartbox" style="height:300px"><canvas id="cSOabc"></canvas></div></div>
       </div>
       <div class="legend" id="soLegend"></div>
+      <div class="card" id="scmCard">
+        <div class="tablehead"><h3>Stockouts by usage class</h3>
+          <span class="seg" id="scmYear"></span>
+          <span class="seg" id="scmWay"><button data-v="rule" class="on" title="A stockout counts once the item is restocked">Restocked</button><button data-v="all" title="Also counts stockouts not restocked yet (items with a max above 0)">Incl. still out</button></span>
+          <span class="sp"></span><button class="btn sm" id="xSCMc">Export CSV</button></div>
+        <p class="sub" id="scmSub"></p>
+        <div class="opps stats scm-stats" id="scmStats"></div>
+        <div class="tablewrap"><table id="tSCMc"></table></div>
+        <h4 class="scm-h">What's behind the numbers</h4>
+        <ul class="scm-find" id="scmFind"></ul>
+        <div class="tablehead" style="margin-top:18px"><h3>By month</h3>
+          <span class="seg" id="scmMeasure"><button data-v="all" class="on" title="Each class's stockouts ÷ all transactions that month: the classes add up to the month's total">% of all transactions</button><button data-v="within" title="Each class's stockouts ÷ that class's own transactions">% within class</button></span>
+          <span class="sp"></span><button class="btn sm" id="xSCM">Export CSV</button></div>
+        <div class="chartbox" style="height:280px"><canvas id="cSCM"></canvas></div>
+        <div class="tablewrap" style="margin-top:12px"><table id="tSCM"></table></div>
+        <p class="note">Stockable items (not class NS) at the branches. Transactions = WO transactions with a quantity. <b>Restocked</b>: counted in the month the item was last at zero, once it's restocked. <b>Incl. still out</b> adds stockouts not restocked yet, in the month they started, leaving out items whose max was 0 when they ran out (not meant to be restocked). Class = the item's class on the date of each transaction, from the inv_loc audit trail; usage class is the first letter (AA–AD count as A), Other = XX, N##, S### and blank. Days out run from the transaction that took it to zero to the next one above zero (still out: to today). Order lines are customer order lines for stocked items (not direct ship or special order). Today's figures use max above 0. Location filters apply; supplier, buyer and ABC filters don't.</p>
+      </div>
       <div class="card">
         <div class="tablehead"><h3>Stockouts by</h3>
           <span class="seg" id="soMode"><button data-v="events" class="on">Event</button><button data-v="items">Item-location</button><button data-v="supplier">Supplier</button><button data-v="loc">Location</button><button data-v="buyer">Primary buyer</button><button data-v="abc">ABC class</button></span>
@@ -1082,6 +1158,16 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);background:var(
 .how dt{font-weight:700}.how dd{margin:0;color:var(--ink2)}.how dd i{display:block;color:var(--muted);font-style:normal;margin-top:2px}
 .how p{margin:8px 0 0;color:var(--muted)}
 @media (max-width:640px){.how dl{grid-template-columns:1fr}.how dd{margin-bottom:6px}}
+.car{display:inline-block;width:14px;color:var(--muted);transition:transform .15s ease}tr.open .car{transform:rotate(90deg);color:var(--accent)}
+tr.open td{background:var(--accent-soft)}
+tr.xrow>td{background:var(--soft);white-space:normal;padding:12px 16px 14px;border-bottom:2px solid var(--line)}
+.xd{display:grid;gap:10px;max-width:1100px}
+.xd .meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--ink2);font-size:12.5px}.xd .meta b{color:var(--ink)}
+.strip{position:relative;height:16px;background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.strip i{position:absolute;top:0;bottom:0;background:var(--bad);opacity:.85;min-width:2px}
+.strip-ax{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:2px}
+.xd table{width:auto;min-width:min(100%,640px);font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.xd th{cursor:default;background:none}.xd td{padding:5px 10px}
 .fade{animation:fd .35s ease both}@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.fade{animation:none}.bar .f{transition:none}}
 </style>
@@ -1157,6 +1243,7 @@ function bars(el, k, list){
 
 /* ---- tables ---- */
 const SORT = {}, LIMIT = {ven:30, rep:30, all:100};
+const EXP = new Set();   // item-locations opened to show every stockout
 function table(id, cols, data, opt){
   opt = opt || {};
   const s = SORT[id] || opt.sort; SORT[id] = s;
@@ -1164,13 +1251,41 @@ function table(id, cols, data, opt){
   if (c) data.sort((p, q) => { const a = p[c.k], b = q[c.k]; return (typeof a === 'number' || typeof b === 'number' ? (a || 0) - (b || 0) : String(a == null ? '' : a).localeCompare(String(b == null ? '' : b))) * s.d; });
   const lim = LIMIT[id], shown = data.slice(0, lim);
   $(id).innerHTML = '<thead><tr>' + cols.map(x => '<th class="' + (x.num ? 'num' : '') + '"' + (x.nosort ? '' : ' data-t="' + id + '" data-k="' + x.k + '"') + '>' + x.h + (s.k === x.k ? '<span class="ar">' + (s.d > 0 ? '▲' : '▼') + '</span>' : '') + '</th>').join('') + '</tr></thead>'
-    + '<tbody>' + (shown.length ? shown.map(r => '<tr class="' + (opt.click ? 'click' : '') + (opt.sel && opt.sel(r) ? ' sel' : '') + '"' + (opt.click ? ' data-click="' + id + '" data-v="' + esc(opt.key(r)) + '"' : '') + '>' + cols.map(x => '<td class="' + (x.num ? 'num' : '') + (x.cls ? ' ' + x.cls : '') + '">' + (x.f ? x.f(r) : esc(r[x.k])) + '</td>').join('') + '</tr>').join('') : '<tr><td colspan="' + cols.length + '" class="empty">Nothing for this view.</td></tr>') + '</tbody>';
+    + '<tbody>' + (shown.length ? (() => { const done = new Set(); return shown.map(r => {
+      const xk = opt.expand ? opt.expand(r) : null, open = xk != null && EXP.has(xk), first = open && !done.has(xk);
+      if (first) done.add(xk);
+      return '<tr class="' + (opt.click || xk != null ? 'click' : '') + (opt.sel && opt.sel(r) ? ' sel' : '') + (open ? ' open' : '') + '"'
+        + (opt.click ? ' data-click="' + id + '" data-v="' + esc(opt.key(r)) + '"' : '') + (xk != null ? ' data-x="' + esc(xk) + '" title="Click to ' + (open ? 'hide' : 'show') + ' every stockout of this item here"' : '') + '>'
+        + cols.map((x, ci) => '<td class="' + (x.num ? 'num' : '') + (x.cls ? ' ' + x.cls : '') + '">' + (ci === 0 && xk != null ? '<span class="car">▸</span>' : '') + (x.f ? x.f(r) : esc(r[x.k])) + '</td>').join('') + '</tr>'
+        + (first ? '<tr class="xrow"><td colspan="' + cols.length + '">' + detail(xk) + '</td></tr>' : '');
+    }).join(''); })() : '<tr><td colspan="' + cols.length + '" class="empty">' + (opt.empty || 'Nothing for this view.') + '</td></tr>') + '</tbody>';
   const more = $(id + 'More'); more.hidden = data.length <= lim; more.textContent = 'Show all ' + nf(data.length);
   more.onclick = () => { LIMIT[id] = 1e9; render(); };
+}
+function detail(key){
+  const evs = D.ev.filter(e => keyOf(e) === key).sort((a, b) => String(b.s).localeCompare(String(a.s)));
+  if (!evs.length) return '<div class="empty">No stockouts for this item here.</div>';
+  const e0 = evs[0];
+  const end = new Date(D.asOfIso + 'T00:00:00'), start = new Date(end.getTime() - D.days * 864e5);
+  const pos = s => Math.max(0, Math.min(100, (new Date(s + 'T00:00:00') - start) / (end - start) * 100));
+  const daysOut = sum(evs, z => z.n);
+  const strip = evs.map(z => { const a = pos(z.s), b = z.o || !z.e ? 100 : pos(z.e);
+    return '<i style="left:' + a.toFixed(2) + '%;width:' + Math.max(0.6, b - a).toFixed(2) + '%" title="' + esc(fdate(z.s) + ' to ' + (z.o ? 'today (still out)' : fdate(z.e)) + ' · ' + nf(z.n) + ' days') + '"></i>'; }).join('');
+  return '<div class="xd">'
+    + '<div class="meta"><span><b>' + esc(e0.i) + '</b> ' + esc(e0.d) + '</span><span>' + esc(e0.l) + '</span><span>Vendor <b>' + esc(e0.v) + '</b></span><span>ABC <b>' + esc(e0.a) + '</b></span>'
+    + '<span>Min <b>' + nf(e0.mn) + '</b> · Max <b>' + nf(e0.mx) + '</b> · Usage <b>' + nf(e0.u, 1) + '</b>/mo</span></div>'
+    + '<div class="meta"><span><b>' + nf(evs.length) + '</b> stockout' + (evs.length === 1 ? '' : 's') + ' in ' + D.days + ' days</span><span><b>' + nf(daysOut) + '</b> days out (' + Math.round(daysOut / D.days * 100) + '% of the time)</span>'
+    + '<span>Est. lost sales <b>' + M(sum(evs, z => z.ls)) + '</b></span>' + (evs.some(z => z.o) ? '<span class="out">STILL OUT</span>' : '') + '</div>'
+    + '<div><div class="strip">' + strip + '</div><div class="strip-ax"><span>' + fdate(start.toISOString().slice(0, 10)) + '</span><span>' + fdate(D.asOfIso) + '</span></div></div>'
+    + '<table><thead><tr><th>Out from</th><th>Back in</th><th class="num">Days out</th><th>Cause</th><th class="num">Est. lost sales</th></tr></thead><tbody>'
+    + evs.map(z => '<tr><td>' + fdate(z.s) + '</td><td>' + (z.o ? '<span class="out">STILL OUT</span>' : fdate(z.e)) + '</td><td class="num">' + nf(z.n) + '</td><td>' + esc(z.c) + '</td><td class="num">' + M(z.ls) + '</td></tr>').join('')
+    + '</tbody></table></div>';
 }
 document.addEventListener('click', e => {
   const t = e.target;
   if (!t.closest || t.classList.contains('note')) return;
+  const xr = t.closest('tr[data-x]');
+  if (xr) { const k = xr.dataset.x; if (EXP.has(k)) EXP.delete(k); else EXP.add(k); return render(); }
   const b = t.closest('.bar'); if (b) return toggle(b.dataset.k, b.dataset.v);
   const th = t.closest('th[data-t]');
   if (th) { const s = SORT[th.dataset.t]; SORT[th.dataset.t] = {k:th.dataset.k, d:s && s.k === th.dataset.k ? -s.d : -1}; return render(); }
@@ -1197,15 +1312,16 @@ function render(){
   const rg = new Map(); all.forEach(e => { const k = keyOf(e); const x = rg.get(k) || []; x.push(e); rg.set(k, x); });
   const rep = [...rg.values()].filter(a => a.length >= 3).map(a => { const e = a[0]; return {key:keyOf(e), i:e.i, d:e.d, l:e.l, v:e.v, a:e.a, times:a.length, days:sum(a, z => z.n) / a.length, ls:sum(a, z => z.ls),
     mn:e.mn, mx:e.mx, u:e.u, cause:topOf(a, z => z.c)[0], o:a.some(z => z.o)}; });
-  $('rN').textContent = nf(rep.length) + ' item-locations out 3 or more times';
+  $('rN').textContent = nf(rep.length) + ' item-locations out 3 or more times · click one for every stockout';
   table('rep', [{k:'i', h:'Item', f:r => '<b>' + esc(r.i) + '</b>' + (r.o ? ' <span class="out">OUT</span>' : '')}, {k:'d', h:'Description', cls:'d'}, {k:'l', h:'Location'}, {k:'v', h:'Vendor'}, {k:'a', h:'ABC'},
     {k:'times', h:'Times out', num:1, f:r => nf(r.times)}, {k:'days', h:'Avg days out', num:1, f:r => nf(r.days, 1)}, {k:'ls', h:'Est. lost sales', num:1, f:r => M(r.ls)},
     {k:'mn', h:'Min', num:1, f:r => nf(r.mn)}, {k:'mx', h:'Max', num:1, f:r => nf(r.mx)}, {k:'u', h:'Usage / mo', num:1, f:r => nf(r.u, 1)}, {k:'cause', h:'Main cause'},
-    {k:'note', h:'Your note', nosort:1, f:r => noteInput('i', r.key)}], rep, {sort:{k:'times', d:-1}});
-  $('aN').textContent = nf(all.length) + ' events';
+    {k:'note', h:'Your note', nosort:1, f:r => noteInput('i', r.key)}], rep, {sort:{k:'times', d:-1}, expand:r => r.key,
+    empty:(Object.keys(LBL).some(k => F[k]) || F.q ? 'No item ran out 3 or more times with these filters. Clear them to see all.' : 'No item ran out 3 or more times at one location in the last ' + D.days + ' days.') + ' Click any row under All stockouts to see that item’s full history.'});
+  $('aN').textContent = nf(all.length) + ' events · click a row for every stockout of that item here';
   table('all', [{k:'i', h:'Item', f:r => '<b>' + esc(r.i) + '</b>'}, {k:'d', h:'Description', cls:'d'}, {k:'l', h:'Location'}, {k:'v', h:'Vendor'}, {k:'a', h:'ABC'},
     {k:'s', h:'Out from', f:r => fdate(r.s)}, {k:'e', h:'Back in', f:r => r.o ? '<span class="out">STILL OUT</span>' : fdate(r.e)}, {k:'n', h:'Days', num:1, f:r => nf(r.n)},
-    {k:'ls', h:'Est. lost sales', num:1, f:r => M(r.ls)}, {k:'c', h:'Cause'}], all.slice(), {sort:{k:'s', d:-1}});
+    {k:'ls', h:'Est. lost sales', num:1, f:r => M(r.ls)}, {k:'c', h:'Cause'}], all.slice(), {sort:{k:'s', d:-1}, expand:keyOf});
   status();
 }
 render();
@@ -1435,7 +1551,7 @@ const DEPTS = ['Purchasing Department', 'Branch', 'Non-PO/Trace'];
 const S = {loc:'ALL', type:'ALL', group:'ALL', supplier:'ALL', abc:'ALL', dept:'ALL', buyer:'ALL', q:'', on:new Set(STATUS.map(s => s.key)),
            tab:lsGet('tab','overview'), cover:lsGet('cover',3), target:lsGet('target',6), noUsage:false, dim:'supplier', exBasis:'mos'};
 const T = {};   // per-table sort/paging state
-const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Buyer scorecard', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', branches:'Branch performance', structure:'Buyer structure', autobuy:'Auto-buy candidates', minmax:'Min/max changes', costs:'Cost changes'};
+const TITLES = {overview:'Overview', items:'Item-locations', transfers:'Transfer opportunities', excess:'Excess stock', buyers:'Buyer scorecard', breakdown:'Breakdown', layers:'Largest open FIFO layers', onorder:'On order', returns:'Return candidates', stockcand:'Stocking candidates', overmax:'Usage over max', service:'Service: backorders and stockouts', turns:'Turns, GMROI and days on hand', change:'What changed in inventory', doh:'Days on hand', vendors:'Vendor reorder focus', stockouts:'Stockout analysis', scorecard:'Vendor scorecard', suppliers:'Delivery and lead time', fill:'Fill rate', branches:'Branch performance', structure:'Buyer structure', autobuy:'Auto-buy candidates', minmax:'Min/max changes', costs:'Cost changes'};
 const TABS = Object.keys(TITLES);   // every tab with a title can be linked to (#structure) and restored on reload
 const history_replace = h => { try { window.history.replaceState(null, '', h); } catch {} };
 if (TABS.includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
@@ -1444,7 +1560,7 @@ if (!TABS.includes(S.tab)) S.tab = 'overview';
    A link to a tab in another section asks the hub to switch views; the hub then calls IH.setSection. */
 const EMBED = (() => { try { return (window.parent !== window && window.parent.IH_BRIDGE) || null; } catch { return null; } })();
 const SECTIONS = {
-  inventory:['overview', 'items', 'transfers', 'excess', 'layers', 'onorder', 'returns', 'minmax', 'costs', 'change', 'turns', 'doh', 'service', 'stockouts', 'fill', 'branches', 'breakdown'],
+  inventory:['overview', 'items', 'transfers', 'excess', 'layers', 'onorder', 'returns', 'stockcand', 'overmax', 'minmax', 'costs', 'change', 'turns', 'doh', 'service', 'stockouts', 'fill', 'branches', 'breakdown'],
   suppliers:['scorecard', 'suppliers', 'vendors', 'autobuy'],
   team:['buyers', 'structure', 'autobuy']};
 const MGR_ONLY = {team:['structure', 'autobuy']};   // these name people and estimate headcount: purchasing managers only
@@ -1699,6 +1815,8 @@ function render(){
   $('cExcess').textContent = v.excess.length.toLocaleString();
   $('nOO').textContent = poLines.length ? poLines.length.toLocaleString() : '';
   $('nRT').textContent = returnLayers.length ? returnLayers.length.toLocaleString() : '';
+  $('nSC').textContent = scRows.length ? scView().length.toLocaleString() : '';
+  $('nUV').textContent = uvRows.length ? uvView().length.toLocaleString() : '';
   $('nSV').textContent = backorders.length ? backorders.length.toLocaleString() : '';
   $('nSO').textContent = soEvents.length ? soEvents.length.toLocaleString() : '';
   $('nSC').textContent = (modRows('vendor_growth') || []).length ? '' : '';
@@ -1710,7 +1828,7 @@ function render(){
 function renderTab(){
   const v = views();
   const _v = v;
-  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, branches:renderBranches, structure:renderBuyerStructure, autobuy:renderAutoBuy, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
+  ({overview:renderOverview, items:renderItems, transfers:renderTransfers, excess:renderExcess, buyers:renderBuyers, breakdown:renderBreakdown, layers:renderLayers, onorder:renderOnOrder, returns:renderReturns, stockcand:renderStockCand, overmax:renderUsageMax, suppliers:renderSuppliers, service:renderService, turns:renderTurns, change:renderChange, doh:renderDOH, vendors:renderVendors, stockouts:renderStockouts, scorecard:renderScorecard, fill:renderFill, branches:renderBranches, structure:renderBuyerStructure, autobuy:renderAutoBuy, minmax:renderMinMax, costs:renderCosts}[S.tab] || renderOverview)(v);
   try { (SUM[S.tab] || (() => {}))(_v); } catch (ex) { console.warn('summary', ex); }
 }
 function setTab(t){
@@ -2251,7 +2369,7 @@ const FMT = {
   money:v => money(v), money2:v => money2(v), num:v => nf(v), num1:v => nf(v, 1), status:pill,
   date:v => v ? shortDate(v) : '', days:v => v == null ? '<span class="muted">never</span>' : nf(v),
   doh:v => v == null ? '<span class="muted">no sales</span>' : nf(v, 0), dohu:v => v == null ? '<span class="muted">no usage</span>' : nf(v, 0),
-  turns:v => v == null ? '<span class="muted">–</span>' : nf(v, 1) + '×', pct:v => v == null ? '<span class="muted">–</span>' : (v * 100).toFixed(1) + '%',
+  turns:v => v == null ? '<span class="muted">–</span>' : nf(v, 1) + '×', pct2:v => v == null ? '<span class="muted">–</span>' : (v * 100).toFixed(2) + '%', pct:v => v == null ? '<span class="muted">–</span>' : (v * 100).toFixed(1) + '%',
   trend:v => v == null ? '<span class="muted">–</span>' : `${v >= 0 ? '↑' : '↓'} ${Math.abs(v * 100).toFixed(0)}%`, mos:v => v == null ? '<span class="muted">–</span>' : nf(v, 1)
 };
 function simpleTable(id, cols, data, opts = {}){
@@ -2697,7 +2815,7 @@ function renderOnOrder(){
     {k:'riskText', h:'Flags', html:r => riskPill(r.risks), filter:'text'},
     {k:'po_date', h:'PO date', type:'date'}, {k:'date_due', h:'Due', type:'date'}, {k:'late', h:'Days late', type:'num', html:r => r.late > 0 ? `<b style="color:var(--bad)">${nf(r.late)}</b>` : '<span class="muted">–</span>'},
     {k:'qty', h:'Qty open', type:'num'}, {k:'value', h:'Value open', type:'money'}, {k:'onHand', h:'On hand', type:'num'},
-    {k:'invMax', h:'P21 max', type:'num'}, {k:'mosAfter', h:'Mo. supply after', type:'mos', title:'(on hand + all open PO qty) ÷ monthly usage'},
+    {k:'invMax', h:'Target', type:'num', title:'Max, or OP + OQ for OP/OQ items'}, {k:'mosAfter', h:'Mo. supply after', type:'mos', title:'(on hand + all open PO qty) ÷ monthly usage'},
     {k:'riskRank', h:'Risk score', type:'num', title:'3 = dead/slow on order, 2 = over max, 1 = past due only'}
   ], v, {sortKey:'riskRank', hidden:['riskRank'], footId:'fOO', exportId:'xOO', exportName:'open_po_review', onRow:r => openItem(r.item),
     summary:s => money(sum(s, r => r.value)) + ' open', foot:(c, i, s) => c.k === 'value' ? money(sum(s, r => r.value)) : i === 0 ? 'Total' : ''});
@@ -3724,7 +3842,7 @@ SUM.layers = () => {
 SUM.change = () => {};   // has its own story card
 
 /* ================= analysis screens: inventory change, stockouts, min/max, cost ================= */
-let flowRows = [], receiptRows = [], histRows = [], mmRows = [], costRows = [], soEvents = [];
+let flowRows = [], receiptRows = [], histRows = [], mmRows = [], costRows = [], soEvents = [], scmRows = [], scmRaw = [], scRows = [], uvRows = [];
 let fillRows = [], fillWeekly = [], supFill = [];
 let CHANGE_DAYS = 61;
 const CAT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6', '#008300'];
@@ -3744,6 +3862,35 @@ function enrichAnalysis(){
   // items with max 0 (or non-stockable, filtered in SQL) are expected to run out, so they never count as stockouts
   soEvents = (modRows('stockout_events') || []).filter(e => e.inv_max == null || +e.inv_max > 0 || (+(P.params && P.params.require_max) === 0 && +e.inv_min > 0)).map(e => ({...e, item:String(e.item_id), loc:String(e.location_id), days:n(e.days_out), ongoing:+e.ongoing === 1}));
   const nn = v => v == null || v === '' ? 0 : +v;
+  scRows = (modRows('stock_candidates') || []).map(x => {
+    const u = ['u01', 'u02', 'u03', 'u04', 'u05', 'u06', 'u07', 'u08', 'u09', 'u10', 'u11', 'u12'].map(k => nn(x[k]));
+    const avg = u.reduce((a, b) => a + b, 0) / 12, sd = Math.sqrt(u.reduce((a, b) => a + (b - avg) ** 2, 0) / 12);
+    return {item:String(x.item_id), loc:String(x.location_id), desc:x.item_desc, cls:x.purchase_class || '', method:x.replenishment_method, supplier:x.supplier_name || '(none)',
+      cost:nn(x.unit_cost), onHand:nn(x.qty_on_hand), u, firstMonth:x.first_month, months:u.filter(v => v > 0).length, last3:u.slice(9).filter(v => v > 0).length,
+      total:u.reduce((a, b) => a + b, 0), avg, cv:avg > 0 ? sd / avg : null, lines:nn(x.lines), orders:nn(x.orders), customers:nn(x.customers),
+      direct:nn(x.lines) ? nn(x.lines_direct_special) / nn(x.lines) : 0, sales:nn(x.sales_12m), lastOrder:x.last_order, stocking:nn(x.branches_stocking)};
+  });
+  uvRows = (modRows('usage_vs_max') || []).map(x => {
+    const M12 = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    const u = M12.map(m => nn(x['u' + m])), t = M12.map(m => nn(x['t' + m]));
+    const over = u.map((v, i) => t[i] > 0 && v > t[i]);
+    const method = x.replenishment_method, mn = nn(x.inv_min), mx = nn(x.inv_max), target = method === 'OP/OQ' ? mn + mx : mx;
+    const srt = u.slice().sort((a, b) => a - b), r = (srt.length - 1) * 0.75, p75 = srt[Math.floor(r)] + (srt[Math.ceil(r)] - srt[Math.floor(r)]) * (r - Math.floor(r));
+    const sugg = Math.ceil(p75);
+    const overPcts = u.map((v, i) => over[i] ? (v - t[i]) / t[i] : null).filter(v => v != null);
+    return {item:String(x.item_id), loc:String(x.location_id), desc:x.item_desc, cls:x.purchase_class || '', method, min:mn, max:mx, target, cost:nn(x.unit_cost), onHand:nn(x.qty_on_hand),
+      supplier:x.supplier_name || '(none)', buyer:x.supplier_buyer || 'No buyer assigned', firstMonth:x.first_month, u, t, over,
+      monthsOver:over.filter(Boolean).length, last3:over.slice(9).filter(Boolean).length, last6:over.slice(6).filter(Boolean).length,
+      avg:u.reduce((a, b) => a + b, 0) / 12, peak:Math.max(...u), overPct:overPcts.length ? overPcts.reduce((a, b) => a + b, 0) / overPcts.length : null,
+      unitsOver:u.reduce((a, v, i) => a + (over[i] ? v - t[i] : 0), 0),
+      sugg, change:sugg > target ? sugg - target : 0, suggOq:method === 'OP/OQ' ? Math.max(0, sugg - mn) : null,
+      lastChange:x.last_max_change || null, lastBy:x.last_max_by || '', before:x.last_max_before == null ? null : +x.last_max_before, after:x.last_max_after == null ? null : +x.last_max_after};
+  });
+  scmRaw = modRows('stockout_class_monthly') || [];
+  scmRows = scmRaw.filter(x => x.period != null).map(x => ({period:String(x.period), loc:String(x.location_id), cls:String(x.usage_class),
+    wo:nn(x.wo_tx), rule:nn(x.so_rule), still:nn(x.still_out), still0:nn(x.still_out_max0), outs:nn(x.outs), days:nn(x.days_out), outsR:nn(x.outs_restocked), daysR:nn(x.days_out_restocked),
+    adj:nn(x.started_by_adjustment), trf:nn(x.started_by_transfer_other), lines:nn(x.order_lines), linesOut:nn(x.lines_while_out),
+    itemsShip:nn(x.items_shipping), itemsOut:nn(x.items_out), snapItems:nn(x.snap_items), snapZero:nn(x.snap_zero), snapAlloc:nn(x.snap_allocated)}));
   fillRows = (modRows('fill_rate') || []).map(f => ({...f, item:String(f.item_id), loc:String(f.location_id), lines:nn(f.lines), filled:nn(f.lines_filled), partial:nn(f.lines_partial),
     late:nn(f.lines_late), open:nn(f.lines_open), canceled:nn(f.lines_canceled), firstFull:nn(f.lines_first_ship_full), qtyOrd:nn(f.qty_ordered), qtyFill:nn(f.qty_filled),
     valOrd:nn(f.value_ordered), valFill:nn(f.value_filled), shorted:nn(f.customers_shorted), customers:nn(f.customers), orders:nn(f.orders),
@@ -3964,7 +4111,305 @@ function stockoutView(){
             reaction, trend:tr ? tr.pct : null, poLate:e.open_po_due && e.open_po_received ? Math.round((new Date(e.open_po_received) - new Date(e.open_po_due)) / 864e5) : null};
   }).filter(x => passes(x.r));
 }
+/* ================= Stocking candidates: non-stock items with recent, consistent usage ================= */
+const scKey = r => r.loc + '|' + r.item;
+let scSel = new Set(lsGet('scSel', []));
+const scSave = () => lsSet('scSel', [...scSel]);
+const scSet = () => ({months:S.scMonths ?? lsGet('scMonths', 6), last3:S.scLast3 ?? lsGet('scLast3', 2), cust:S.scCust ?? lsGet('scCust', 3), direct:S.scDirect ?? lsGet('scDirect', 50)});
+function scView(){
+  const t = scSet();
+  return scRows.filter(r => sel('loc', r.loc) && (S.type === 'ALL' || (locMeta.get(r.loc) || {type:'BRANCH'}).type === S.type)
+    && r.months >= t.months && r.last3 >= t.last3 && r.customers >= t.cust && r.direct * 100 <= t.direct)
+    .map(r => ({...r, locLabel:locName(r.loc), key:scKey(r)}));
+}
+const scSteady = cv => cv == null ? '–' : cv < 0.5 ? 'Steady' : cv < 1 ? 'Variable' : 'Lumpy';
+function downloadTxt(name, text){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type:'text/plain'}));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+function scSelInfo(){
+  const picked = scRows.filter(r => scSel.has(scKey(r)));
+  const locs = new Set(picked.map(r => r.loc));
+  $('scSelInfo').textContent = picked.length ? `${picked.length.toLocaleString()} selected at ${locs.size} branch${locs.size === 1 ? '' : 'es'}` : 'Nothing selected';
+  $('scExport').disabled = !picked.length;
+}
+function renderStockCand(){
+  $('scNotice').innerHTML = modNotice(['stock_candidates']);
+  const t = scSet();
+  [['scMonths', 'months'], ['scLast3', 'last3'], ['scCust', 'cust'], ['scDirect', 'direct']].forEach(([id, k]) => {
+    const el = $(id); el.value = t[k];
+    el.onchange = () => { const v = Math.max(0, +el.value || 0); S[id] = v; lsSet(id, v); resetTable('tSC'); renderTab(); };
+  });
+  $('scOnlySel').checked = !!S.scOnlySel;
+  $('scOnlySel').onchange = () => { S.scOnlySel = $('scOnlySel').checked; resetTable('tSC'); renderTab(); };
+  const all = scView();
+  const v = S.scOnlySel ? all.filter(r => scSel.has(r.key)) : all;
+  const stockedElsewhere = all.filter(r => r.stocking > 0).length;
+  story('st_stockcand', [all.length
+    ? `<b>${all.length.toLocaleString()}</b> non-stock item-locations sold in at least ${t.months} of the last 12 months (${t.last3}+ of the last 3) to ${t.cust}+ customers, worth <b>${compact(sum(all, r => r.sales))}</b> in sales. ${stockedElsewhere.toLocaleString()} of them are already stocked at another branch. Tick the ones to stock and export them for P21.`
+    : 'No non-stock items meet these thresholds for this view.']);
+  $('scStats').innerHTML = stat('Candidates', all.length.toLocaleString(), `${new Set(all.map(r => r.item)).size.toLocaleString()} items at ${new Set(all.map(r => r.loc)).size} branches`) +
+    stat('12-month sales', compact(sum(all, r => r.sales)), `${sum(all, r => r.lines).toLocaleString()} order lines · ${sum(all, r => r.orders).toLocaleString()} orders`) +
+    stat('Steady sellers', all.filter(r => r.cv != null && r.cv < 0.5).length.toLocaleString(), 'monthly usage swings less than half its average', 'good') +
+    stat('Stocked at another branch', stockedElsewhere.toLocaleString(), 'already proven stock items elsewhere');
+  const sparkColor = css('--accent');
+  table('tSC', [
+    {k:'pick', h:'', get:r => scSel.has(r.key) ? 1 : 0, html:r => `<input type="checkbox" class="sc-pick" data-k="${esc(r.key)}"${scSel.has(r.key) ? ' checked' : ''} aria-label="Select ${esc(r.item)}">`, csv:r => scSel.has(r.key) ? 'Y' : ''},
+    {k:'item', h:'Item'}, {k:'desc', h:'Description', cls:'desc'}, {k:'locLabel', h:'Location'}, {k:'cls', h:'Class'}, {k:'supplier', h:'Supplier'},
+    {k:'months', h:'Months used', type:'num', title:'Months with usage, last 12'}, {k:'last3', h:'Last 3', type:'num', title:'Months with usage, last 3'},
+    {k:'trend', h:'12 months', get:r => r.total, html:r => spark(r.u, sparkColor), csv:r => r.u.join(' ')},
+    {k:'avg', h:'Avg / month', type:'num1'}, {k:'steady', h:'Steadiness', get:r => r.cv ?? 99, html:r => `<span title="CV ${r.cv == null ? '–' : r.cv.toFixed(2)}">${scSteady(r.cv)}</span>`, csv:r => scSteady(r.cv)},
+    {k:'customers', h:'Customers', type:'num'}, {k:'orders', h:'Orders', type:'num'}, {k:'lines', h:'Lines', type:'num'},
+    {k:'sales', h:'Sales 12 mo', type:'money'}, {k:'direct', h:'Direct / special', type:'pct'}, {k:'stocking', h:'Branches stocking', type:'num', title:'Branches that stock this item today'},
+    {k:'lastOrder', h:'Last order', type:'date'}, {k:'cost', h:'Unit cost', type:'money2'}, {k:'onHand', h:'On hand', type:'num'}
+  ], v, {sortKey:'sales', footId:'fSC', exportId:'xSC', exportName:'stocking_candidates', onRow:r => openItem(r.item), hidden:['orders', 'cost', 'onHand', 'cls'],
+    summary:s => money(sum(s, r => r.sales)) + ' sales'});
+  $('scAll').onclick = () => { v.forEach(r => scSel.add(r.key)); scSave(); renderTab(); };
+  $('scNone').onclick = () => { scSel.clear(); scSave(); renderTab(); };
+  $('scExport').onclick = () => {
+    const picked = scRows.filter(r => scSel.has(scKey(r)));
+    const byLoc = new Map();
+    picked.forEach(r => byLoc.set(r.loc, [...(byLoc.get(r.loc) || []), r.item]));
+    [...byLoc.entries()].sort().forEach(([loc, items], i) =>
+      setTimeout(() => downloadTxt(`stockable_${loc}.txt`, [...new Set(items)].sort().map(it => `${it}\tY`).join('\r\n') + '\r\n'), i * 400));
+    toast(`Exported ${picked.length.toLocaleString()} item${picked.length === 1 ? '' : 's'} in ${byLoc.size} file${byLoc.size === 1 ? '' : 's'}: stockable_<location>.txt`);
+  };
+  scSelInfo();
+}
+// a tick selects the row; it doesn't open the item
+document.addEventListener('click', e => { if (e.target.classList && e.target.classList.contains('sc-pick')) e.stopPropagation(); }, true);
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (!el.classList || !el.classList.contains('sc-pick')) return;
+  if (el.checked) scSel.add(el.dataset.k); else scSel.delete(el.dataset.k);
+  scSave(); scSelInfo();
+});
+/* ================= Usage over max: items whose monthly usage regularly beats the max in place that month ================= */
+const uvSet = () => ({min:S.uvMin ?? lsGet('uvMin', 4), last:S.uvLast ?? lsGet('uvLast', 0), hide:S.uvHide ?? lsGet('uvHide', false)});
+const MON3S = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const uvMonth = (first, i) => { const y = +first.slice(0, 4), m = +first.slice(5, 7) - 1 + i; return MON3S[m % 12] + ' ' + String(y + Math.floor(m / 12)).slice(2); };
+function uvView(){
+  const t = uvSet();
+  const so = new Map();
+  soEvents.forEach(e => { const k = kk(e.item, e.loc); const a = so.get(k) || {n:0, days:0, out:false}; a.n++; a.days += e.days || 0; if (e.ongoing) a.out = true; so.set(k, a); });
+  const today = Date.parse(todayIso());
+  return uvRows.filter(x => x.monthsOver >= t.min && x.last3 >= t.last).map(x => {
+    const r = lineRow(x.item, x.loc, x.supplier, null, x.desc);
+    const s = so.get(kk(x.item, x.loc)) || {n:0, days:0, out:false};
+    const raisedTo = x.lastChange && x.after != null && x.before != null && x.after > x.before ? x.after : null;
+    const recent = x.lastChange && (today - Date.parse(x.lastChange)) / 864e5 <= 90;
+    const status = x.change <= 0 ? 'covered' : raisedTo != null && recent ? 'raised' : 'review';
+    return {...x, r, locLabel:r.locLabel || locName(x.loc), so:s.n, soDays:s.days, outNow:s.out, addValue:x.change * x.cost, status, recent};
+  }).filter(x => passes(x.r) && (S.type === 'ALL' || (locMeta.get(x.loc) || {type:'BRANCH'}).type === S.type) && (!t.hide || x.status !== 'covered'));
+}
+const UV_STATUS = {review:{label:'Needs review', c:'var(--s-slow)'}, raised:{label:'Max raised recently', c:'var(--s-corp)'}, covered:{label:'Max covers it now', c:'var(--s-active)'}};
+const uvPill = k => `<span class="pill" style="--c:${UV_STATUS[k].c}"><i></i>${UV_STATUS[k].label}</span>`;
+const uvDots = x => '<span class="uv-dots" title="Each dot is a month, oldest first: filled = usage above the max">' + x.over.map(o => `<i class="${o ? 'on' : ''}"></i>`).join('') + '</span>';
+function uvDrill(x){
+  const labels = x.u.map((_, i) => uvMonth(x.firstMonth, i));
+  const tn = x.method === 'OP/OQ' ? 'OP + OQ' : 'Max', tl = x.method === 'OP/OQ' ? 'OP + OQ' : 'max';
+  openDrill({title:`${x.item} at ${x.locLabel}`, sub:`${x.desc || ''} · ${x.supplier} · ${x.method}`,
+    facts:[['Months over ' + tl, `${x.monthsOver} of 12`], ['Avg usage / month', nf(x.avg, 1)], ['Peak month', nf(x.peak)], [tn + ' today', nf(x.target)],
+           ['Suggested ' + (x.method === 'OP/OQ' ? 'OQ' : 'max'), x.change > 0 ? nf(x.method === 'OP/OQ' ? x.suggOq : x.sugg) : 'keep'], ['Stockouts, 180 days', nf(x.so)]],
+    note:x.lastChange ? `Max last changed ${shortDate(x.lastChange)}${x.lastBy ? ' by ' + esc(x.lastBy) : ''}${x.before != null ? `: ${nf(x.before)} → ${nf(x.after)}` : ''}.` : 'No max change in the last 12 months.',
+    action:{label:'Open item', fn:() => openItem(x.item)},
+    chart:{title:'Usage vs ' + tl + ', last 12 months', sub:'Bars: units used (orange = above the ' + tl + ') · line: the ' + tl + ' in place that month', height:280,
+      cfg:{type:'bar', data:{labels, datasets:[
+        {type:'bar', label:'Usage', data:x.u, backgroundColor:x.u.map((v, i) => x.over[i] ? css('--s-slow') : '#2a78d6'), borderRadius:4, maxBarThickness:34, order:2},
+        {type:'line', label:tn + ' that month', data:x.t, stepped:'middle', borderColor:css('--ink2'), borderDash:[6, 4], borderWidth:2, pointRadius:0, order:1}]},
+        options:{maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', intersect:false}, scales:{y:{beginAtZero:true}, x:{grid:{display:false}}},
+          plugins:{legend:{position:'top', align:'start', labels:{boxWidth:10, boxHeight:10}}}}}},
+    table:{title:'By month', exportName:`usage_vs_max_${x.item}_${x.loc}`, sortKey:'i', sortDir:1,
+      rows:x.u.map((v, i) => ({i, month:labels[i], usage:v, target:x.t[i], over:x.over[i] ? v - x.t[i] : 0, pctOf:x.t[i] > 0 ? v / x.t[i] : null})),
+      cols:[{k:'month', h:'Month'}, {k:'usage', h:'Usage', type:'num'}, {k:'target', h:tn + ' that month', type:'num'}, {k:'over', h:'Over by', type:'num', html:r => r.over > 0 ? `<b style="color:var(--s-slow)">${nf(r.over)}</b>` : '–'},
+            {k:'pctOf', h:'Usage ÷ ' + tl, type:'pct'}, {k:'i', h:'#', type:'num'}], hidden:['i']}});
+}
+function renderUsageMax(){
+  $('uvNotice').innerHTML = modNotice(['usage_vs_max', 'stockout_events']);
+  const t = uvSet();
+  $('uvMin').value = t.min; $('uvLast').value = t.last; $('uvHideRaised').checked = !!t.hide;
+  $('uvMin').onchange = () => { S.uvMin = Math.min(12, Math.max(1, +$('uvMin').value || 4)); lsSet('uvMin', S.uvMin); resetTable('tUV'); renderTab(); };
+  $('uvLast').onchange = () => { S.uvLast = Math.min(3, Math.max(0, +$('uvLast').value || 0)); lsSet('uvLast', S.uvLast); resetTable('tUV'); renderTab(); };
+  $('uvHideRaised').onchange = () => { S.uvHide = $('uvHideRaised').checked; lsSet('uvHide', S.uvHide); resetTable('tUV'); renderTab(); };
+  const v = uvView();
+  const stocked = rows.filter(r => r.invMax != null && r.invMax > 0 && passes(r) && (S.type === 'ALL' || r.type === S.type) && r.type === 'BRANCH').length;
+  const allSo = soEvents.filter(e => passes(lineRow(e.item, e.loc, e.supplier_name, null, e.item_desc))).length;
+  const review = v.filter(x => x.status === 'review');
+  const soOn = sum(v, x => x.so);
+  const unitsOverValue = sum(v, x => x.unitsOver * x.cost);
+  story('st_overmax', [v.length
+    ? `<b>${v.length.toLocaleString()}</b> stocked item-locations sold more than their max in at least ${t.min} of the last 12 months${stocked ? ` (${pct(v.length, stocked)} of stocked branch item-locations)` : ''}. They account for <b>${nf(soOn)}</b> stockouts in the last 180 days${allSo ? ` (${pct(soOn, allSo)} of all)` : ''}.`
+    : 'No item-locations meet these thresholds for this view.',
+    review.length ? `${review.length.toLocaleString()} still need a decision: raising them to their usual demand (75th percentile of monthly usage) adds about <b>${compact(sum(review, x => x.addValue))}</b> of stock at cost. ${v.filter(x => x.status === 'raised').length.toLocaleString()} were raised in the last 90 days; ${v.filter(x => x.status === 'covered').length.toLocaleString()} already have a max that covers their usual month.` : '']);
+  $('uvStats').innerHTML =
+    stat('Regularly over max', v.length.toLocaleString(), `${t.min}+ of 12 months · ${v.filter(x => x.last3 >= 2).length.toLocaleString()} in 2+ of the last 3`, 'warn') +
+    stat('Stockouts on these items', nf(soOn), `last 180 days${allSo ? ` · ${pct(soOn, allSo)} of all stockouts` : ''} · ${v.filter(x => x.outNow).length.toLocaleString()} out now`, 'bad') +
+    stat('Sold above max', compact(unitsOverValue), 'usage beyond the max in those months, at cost, 12 months') +
+    stat('Need a decision', review.length.toLocaleString(), `raise to usual demand: +${compact(sum(review, x => x.addValue))} of stock`) +
+    stat('Raised in the last 90 days', v.filter(x => x.status === 'raised').length.toLocaleString(), 'max increased recently; check it holds', 'good');
+
+  chartDefaults();
+  // months-over distribution
+  const lo = t.min, ks = Array.from({length:13 - lo}, (_, i) => lo + i);
+  const dist = ks.map(k => v.filter(x => x.monthsOver === k).length);
+  make('cUVdist', {type:'bar', data:{labels:ks.map(k => k + ' mo'), datasets:[{label:'Item-locations', data:dist, backgroundColor:ks.map(k => k >= 9 ? css('--s-dead') : k >= 6 ? css('--s-slow') : css('--s-aging')), borderRadius:4, maxBarThickness:40}]},
+    options:{maintainAspectRatio:false, animation:ANIM(), scales:{y:{beginAtZero:true}, x:{grid:{display:false}, title:{display:true, text:'months of the last 12 above max'}}}, plugins:{legend:{display:false}}}});
+  TFILT.cUVdist = i => filterTable('tUV', 'monthsOver', [ks[i], ks[i]], `${ks[i]} months over`);
+  DRILL.cUVdist = TFILT.cUVdist;
+  // by branch
+  const byLoc = topBy(v, x => x.locLabel, () => 1).slice(0, 15);
+  make('cUVloc', hbarCfg(byLoc.map(x => x[0]), byLoc.map(x => x[1]), '#2a78d6', v => nf(v)));
+  TFILT.cUVloc = i => filterTable('tUV', 'locLabel', byLoc[i][0], byLoc[i][0]);
+  DRILL.cUVloc = TFILT.cUVloc;
+  // by supplier
+  const bySup = topBy(v, x => x.supplier, () => 1).slice(0, 15);
+  const soBySup = new Map(bySup.map(([sname]) => [sname, sum(v.filter(x => x.supplier === sname), x => x.so)]));
+  const scfg = hbarCfg(bySup.map(x => trunc(x[0], 40)), bySup.map(x => x[1]), '#eb6834', v => nf(v));
+  scfg.options.plugins = scfg.options.plugins || {};
+  scfg.options.plugins.tooltip = {callbacks:{label:c => ` ${nf(c.raw)} item-locations · ${nf(soBySup.get(bySup[c.dataIndex][0]))} stockouts in 180 days`}};
+  make('cUVsup', scfg);
+  TFILT.cUVsup = i => filterTable('tUV', 'supplier', bySup[i][0], bySup[i][0]);
+  DRILL.cUVsup = TFILT.cUVsup;
+
+  table('tUV', [
+    {k:'item', h:'Item'}, {k:'desc', h:'Description', cls:'desc'}, {k:'locLabel', h:'Location', filter:'set'}, {k:'cls', h:'ABC'}, {k:'method', h:'Method'},
+    {k:'supplier', h:'Supplier', filter:'set'}, {k:'buyer', h:'Buyer'},
+    {k:'monthsOver', h:'Months over', type:'num', title:'Months of the last 12 with usage above the max in place', html:r => `<b>${r.monthsOver}</b> ${uvDots(r)}`, csv:r => r.monthsOver},
+    {k:'last3', h:'Last 3', type:'num'}, {k:'avg', h:'Avg / month', type:'num1'}, {k:'peak', h:'Peak', type:'num'},
+    {k:'target', h:'Max now', type:'num', title:'Max today (OP + OQ for OP/OQ)'}, {k:'overPct', h:'Avg over by', type:'pct', title:'Average of (usage − max) ÷ max in the months over'},
+    {k:'sugg', h:'Suggested max', type:'num', html:r => r.change > 0 ? `<b>${nf(r.sugg)}</b>${r.method === 'OP/OQ' ? `<div class="muted" style="font-size:11px">OQ ${nf(r.suggOq)}</div>` : ''}` : '<span class="muted">keep</span>'},
+    {k:'change', h:'Change', type:'num', html:r => r.change > 0 ? '+' + nf(r.change) : '–'}, {k:'addValue', h:'Added value', type:'money'},
+    {k:'so', h:'Stockouts 180d', type:'num', html:r => r.so ? `${nf(r.so)}${r.outNow ? ' <span class="pill" style="--c:var(--s-dead)"><i></i>out</span>' : ''}` : '–'}, {k:'soDays', h:'Days out', type:'num'},
+    {k:'lastChange', h:'Max last changed', type:'date', html:r => r.lastChange ? `${shortDate(r.lastChange)}${r.before != null ? `<div class="muted" style="font-size:11px">${nf(r.before)} → ${nf(r.after)}${r.lastBy ? ' · ' + esc(r.lastBy) : ''}</div>` : ''}` : '<span class="muted">none in 12 mo</span>'},
+    {k:'statusLabel', h:'Status', get:r => UV_STATUS[r.status].label, html:r => uvPill(r.status), filter:'set'},
+    {k:'unitsOver', h:'Units over max', type:'num'}, {k:'onHand', h:'On hand', type:'num'}, {k:'cost', h:'Unit cost', type:'money2'}, {k:'min', h:'Min / OP', type:'num'}, {k:'max', h:'Max / OQ', type:'num'}
+  ], v, {sortKey:'monthsOver', footId:'fUV', exportId:'xUV', exportName:'usage_over_max', onRow:uvDrill, hidden:['buyer', 'peak', 'soDays', 'unitsOver', 'onHand', 'cost', 'min', 'max', 'method'],
+    summary:s => `${nf(sum(s, r => r.so))} stockouts · +${compact(sum(s, r => r.addValue))} to raise`});
+}
+/* stockouts by usage class (class on the date of each transaction), by month: sql/modules/stockout_class_monthly.sql */
+const SCM_CLASSES = ['A', 'B', 'C', 'D', 'Other'];
+const scmGroup = c => ['A', 'B', 'C', 'D'].includes(c) ? c : 'Other';
+const scmName = c => c === 'Other' ? 'Other' : 'Class ' + c;
+const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const pct2 = v => v == null || !isFinite(v) ? '–' : (v * 100).toFixed(2) + '%';
+const SCM_MF = ['wo', 'rule', 'still', 'still0', 'outs', 'days', 'outsR', 'daysR', 'adj', 'trf', 'lines', 'linesOut'];   // add up across months
+const SCM_IF = ['itemsShip', 'itemsOut'];                                                                                  // distinct per year
+const SCM_NF = ['snapItems', 'snapZero', 'snapAlloc'];                                                                      // today
+const scmBlank = () => Object.fromEntries([...SCM_MF, ...SCM_IF, ...SCM_NF].map(f => [f, 0]));
+const scmAdd = (a, x, fields) => { fields.forEach(f => a[f] += x[f]); return a; };
+const scmIncl = a => a.rule + a.still - a.still0;   // restocked + still out (max above 0)
+const r1 = (a, b) => b ? a / b : null;
+function renderSOClass(){
+  const state = modState('stockout_class_monthly');
+  const clear = msg => { $('scmSub').innerHTML = msg; ['scmStats', 'scmFind', 'tSCMc', 'tSCM', 'scmYear'].forEach(id => $(id).innerHTML = ''); make('cSCM', {type:'bar', data:{labels:[], datasets:[]}}); };
+  if (state !== 'ok') return clear(modNotice(['stockout_class_monthly']));
+  if (scmRaw.length && !scmRows.length) return clear('<div class="notice"><b>This card has new counts.</b> Click Refresh data to load them.</div>');
+  const R = scmRows.filter(x => sel('loc', x.loc) && (S.type === 'ALL' || (locMeta.get(x.loc) || {type:'BRANCH'}).type === S.type));
+  const years = [...new Set(scmRows.filter(x => x.period.length === 7).map(x => x.period.slice(0, 4)))].sort().reverse();
+  const yr = years.includes(S.scmYear) ? S.scmYear : years[0];
+  $('scmYear').innerHTML = years.map(y => `<button data-v="${y}" class="${y === yr ? 'on' : ''}">${y}</button>`).join('');
+  $('scmYear').querySelectorAll('button').forEach(b => b.onclick = () => { S.scmYear = b.dataset.v; renderTab(); });
+  const way = S.scmWay || 'rule'; segOn('scmWay', way);
+  const measure = S.scmMeasure || 'all'; segOn('scmMeasure', measure);
+  const so = a => way === 'rule' ? a.rule : scmIncl(a);
+  const wayName = way === 'rule' ? 'restocked stockouts' : 'stockouts incl. still out';
+  const cur = todayIso().slice(0, 7), thisYear = yr === cur.slice(0, 4);
+
+  // the year, by class
+  const byC = Object.fromEntries(SCM_CLASSES.map(c => [c, scmBlank()]));
+  R.forEach(x => { const a = byC[scmGroup(x.cls)];
+    if (x.period.length === 7 && x.period.startsWith(yr)) scmAdd(a, x, SCM_MF);
+    else if (x.period === yr) scmAdd(a, x, SCM_IF);
+    else if (x.period === 'now' && thisYear) scmAdd(a, x, SCM_NF); });
+  const T = SCM_CLASSES.reduce((t, c) => scmAdd(t, byC[c], [...SCM_MF, ...SCM_IF, ...SCM_NF]), scmBlank());
+  if (!T.wo) return clear('No transactions for this view.');
+  const toDate = thisYear ? ' to date' : '';
+  $('scmSub').innerHTML = `${yr}${toDate}: <b>${pct2(r1(T.rule, T.wo))}</b> of ${nf(T.wo)} transactions stocked out (restocked), <b>${pct2(r1(scmIncl(T), T.wo))}</b> counting stockouts not restocked yet. Both counts are side by side below; the switch above picks the one the monthly chart and table use.`;
+  $('scmStats').innerHTML =
+    stat('Transactions', nf(T.wo), `WO transactions, ${yr}${toDate}`) +
+    stat('Stockouts · restocked', nf(T.rule), `${pct2(r1(T.rule, T.wo))} of transactions`, 'warn') +
+    stat('Stockouts · incl. still out', nf(scmIncl(T)), `${pct2(r1(scmIncl(T), T.wo))} of transactions · ${nf(T.still - T.still0)} still out`, 'bad') +
+    stat('Average days out', T.outs ? nf(T.days / T.outs, 1) : '–', `${nf(T.days)} item-days out of stock · restocked ones ${T.outsR ? nf(T.daysR / T.outsR, 1) : '–'} days`) +
+    stat('Items that ran out', pct(T.itemsOut, T.itemsShip), `${nf(T.itemsOut)} of ${nf(T.itemsShip)} item-locations that shipped, at least once`) +
+    stat('Order lines entered while out', pct(T.linesOut, T.lines), `${nf(T.linesOut)} of ${nf(T.lines)} customer order lines`) +
+    (thisYear ? stat('Out right now', nf(T.snapZero + T.snapAlloc), `${nf(T.snapZero)} at zero + ${nf(T.snapAlloc)} with all stock allocated, of ${nf(T.snapItems)} stocked (max > 0)`, 'bad') : '');
+
+  const mk = (label, a) => ({cls:label, wo:a.wo, rule:a.rule, ruleOwn:r1(a.rule, a.wo), ruleAll:r1(a.rule, T.wo), inc:scmIncl(a), incOwn:r1(scmIncl(a), a.wo), incAll:r1(scmIncl(a), T.wo),
+    still:a.still - a.still0, still0:a.still0, avgDays:r1(a.days, a.outs), days:a.days, itemsPct:r1(a.itemsOut, a.itemsShip), itemsOut:a.itemsOut,
+    linesOut:a.linesOut, linesPct:r1(a.linesOut, a.lines), adj:a.adj, trf:a.trf, snapZero:a.snapZero, snapAlloc:a.snapAlloc});
+  const crow = SCM_CLASSES.map(c => mk(c, byC[c])).filter(r => r.wo || r.inc), ctot = mk('Total', T);
+  const ccols = [{k:'cls', h:'Class', html:r => esc(scmName(r.cls))},
+    {k:'wo', h:'Transactions', type:'num'},
+    {k:'rule', h:'Stockouts · restocked', type:'num', title:'Counted once the item is restocked'}, {k:'ruleOwn', h:'% of class', type:'pct2', title:'Restocked stockouts ÷ the class\'s own transactions'}, {k:'ruleAll', h:'% of all', type:'pct2', title:'Restocked stockouts ÷ all transactions (classes add up to the total)'},
+    {k:'inc', h:'Stockouts · incl. still out', type:'num'}, {k:'incOwn', h:'% of class ', type:'pct2', title:'Incl. still out ÷ the class\'s own transactions'}, {k:'incAll', h:'% of all ', type:'pct2', title:'Incl. still out ÷ all transactions'},
+    {k:'still', h:'Still out', type:'num', title:'Not restocked yet, max above 0 when it ran out'}, {k:'still0', h:'Still out · max 0', type:'num', title:'Not restocked, but the max was 0 when it ran out: not counted'},
+    {k:'avgDays', h:'Avg days out', type:'num1'}, {k:'days', h:'Item-days out', type:'num'},
+    {k:'itemsPct', h:'Items that ran out', type:'pct', title:'Item-locations that ran out at least once ÷ item-locations that shipped'},
+    {k:'linesPct', h:'Lines entered while out', type:'pct', title:'Customer order lines entered while the item was at zero'}, {k:'linesOut', h:'Lines while out', type:'num'},
+    {k:'adj', h:'Started by adjustment', type:'num', title:'Stockouts that began with a negative inventory adjustment'}, {k:'trf', h:'Started by transfer / other', type:'num'}]
+    .concat(thisYear ? [{k:'snapZero', h:'At zero today', type:'num'}, {k:'snapAlloc', h:'All allocated today', type:'num', title:'On hand above zero but all of it allocated'}] : [])
+    .map(c => c.type && c.type.startsWith('pct') ? {...c, csv:r => r[c.k] == null ? '' : (r[c.k] * 100).toFixed(2) + '%'} : c);
+  table('tSCMc', ccols, crow, {sortKey:'cls', sortDir:1, exportId:'xSCMc', exportName:'stockouts_by_class_' + yr, hidden:['days', 'linesOut', 'trf', 'snapAlloc'],
+    foot:(c, i) => i === 0 ? `${yr} total` : c.k === 'ruleAll' || c.k === 'incAll' ? pct2(c.k === 'ruleAll' ? r1(T.rule, T.wo) : r1(scmIncl(T), T.wo)) : ctot[c.k] == null ? '–' : (FMT[c.type] || nf)(ctot[c.k])});
+
+  // findings
+  const C = byC, sumOf = (cs, f) => cs.reduce((t, c) => t + C[c][f], 0);
+  const avgD = c => C[c].outs ? C[c].days / C[c].outs : null;
+  const slow = SCM_CLASSES.filter(c => C[c].outs >= 20).sort((a, b) => avgD(b) - avgD(a))[0];
+  const fast = SCM_CLASSES.filter(c => C[c].outs >= 20).sort((a, b) => avgD(a) - avgD(b))[0];
+  const topAdj = SCM_CLASSES.slice().sort((a, b) => C[b].adj - C[a].adj)[0];
+  const ip = c => pct(C[c].itemsOut, C[c].itemsShip);
+  const F = [
+    T.still ? `<b>Not restocked yet:</b> ${nf(T.still)} stockouts that started in ${yr} haven't been restocked, so the restocked count leaves them out. ${nf(T.still0)} of those are items with a max of 0 when they ran out (not meant to be restocked); the other ${nf(T.still - T.still0)} are real, and ${pct(sumOf(['D', 'Other'], 'still') - sumOf(['D', 'Other'], 'still0'), T.still - T.still0)} of them are D or Other. Counting them moves the rate from ${pct2(r1(T.rule, T.wo))} to ${pct2(r1(scmIncl(T), T.wo))}.` : '',
+    slow && fast && slow !== fast ? `<b>How long they last:</b> stockouts in ${scmName(slow)} last ${nf(avgD(slow), 1)} days on average, in ${scmName(fast)} ${nf(avgD(fast), 1)} days (${nf(avgD(slow) / avgD(fast), 1)}× as long). D and Other make up ${pct(sumOf(['D', 'Other'], 'days'), T.days)} of the ${nf(T.days)} item-days out of stock.` : '',
+    T.itemsShip ? `<b>Items, not just transactions:</b> ${SCM_CLASSES.filter(c => C[c].itemsShip).map(c => `${ip(c)} of ${c === 'Other' ? 'Other' : c} items`).join(', ')} ran out at least once. Fast items ship so often that their transaction rate looks tiny even when they run out.` : '',
+    T.adj ? `<b>Inventory accuracy:</b> ${nf(T.adj)} stockouts started with a negative adjustment, meaning the system showed stock that wasn't on the shelf. The most are in ${scmName(topAdj)} (${nf(C[topAdj].adj)}).` : '',
+    T.trf ? `<b>Not just shipments:</b> ${nf(T.trf)} stockouts started with a transfer or another non-shipment transaction.` : '',
+    T.lines ? `<b>Customer orders:</b> ${nf(T.linesOut)} customer order lines (${pct(T.linesOut, T.lines)}) were entered while the item was at zero. Orders rerouted to another branch, direct ship or special order when an item is out don't show here, so this is a floor.` : '',
+    thisYear && T.snapItems ? `<b>Right now:</b> ${nf(T.snapZero)} stocked item-locations are at zero and ${nf(T.snapAlloc)} more have stock that's all allocated, ${pct(T.snapAlloc, T.snapZero)} more effective stockouts than on hand alone shows. P21 keeps no allocation history, so this is today only.` : '',
+    `<b>Not measurable here:</b> demand that's never entered (counter walk-aways, phone calls) and allocation in past months.`
+  ].filter(Boolean);
+  $('scmFind').innerHTML = F.map(t => `<li>${t}</li>`).join('');
+
+  // by month
+  const agg = list => { const by = Object.fromEntries(SCM_CLASSES.map(c => [c, scmBlank()])); list.forEach(x => scmAdd(by[scmGroup(x.cls)], x, SCM_MF));
+    return {by, t:SCM_CLASSES.reduce((t, c) => scmAdd(t, by[c], SCM_MF), scmBlank())}; };
+  const mrows = R.filter(x => x.period.length === 7);
+  const months = [...new Set(mrows.filter(x => x.period.startsWith(yr)).map(x => x.period))].sort();
+  const M = months.map(m => ({month:m, ...agg(mrows.filter(x => x.period === m))}));
+  const prior = new Map(months.map(m => [m, agg(mrows.filter(x => x.period === (+m.slice(0, 4) - 1) + m.slice(4))).t]));
+  const val = (a, c) => measure === 'all' ? r1(so(a.by[c]), a.t.wo) : r1(so(a.by[c]), a.by[c].wo);
+  chartDefaults();
+  const labels = months.map(m => MON3[+m.slice(5, 7) - 1] + (m === cur ? ' (to date)' : ''));
+  const ds = SCM_CLASSES.map((c, i) => measure === 'all'
+    ? {label:scmName(c), data:M.map(a => val(a, c) == null ? null : val(a, c) * 100), backgroundColor:CAT[i], borderColor:css('--panel'), borderWidth:{top:2}, maxBarThickness:46}
+    : {label:scmName(c), data:M.map(a => val(a, c) == null ? null : val(a, c) * 100), borderColor:CAT[i], backgroundColor:CAT[i], borderWidth:2, pointRadius:4, tension:.25, spanGaps:true});
+  make('cSCM', {type:measure === 'all' ? 'bar' : 'line', data:{labels, datasets:ds},
+    options:{maintainAspectRatio:false, animation:ANIM(), interaction:{mode:'index', intersect:false},
+      scales:{x:{stacked:measure === 'all', grid:{display:false}}, y:{stacked:measure === 'all', beginAtZero:true, ticks:{callback:v => (+v).toFixed(1) + '%'}, title:{display:true, text:measure === 'all' ? 'stockouts ÷ all transactions' : 'stockouts ÷ class transactions'}}},
+      plugins:{legend:{position:'top', align:'start', labels:{boxWidth:10, boxHeight:10}},
+        tooltip:{callbacks:{label:c => { const a = M[c.dataIndex], k = SCM_CLASSES[c.datasetIndex]; return ` ${c.dataset.label}: ${c.raw == null ? '–' : (+c.raw).toFixed(2) + '%'} · ${nf(so(a.by[k]))} of ${nf(measure === 'all' ? a.t.wo : a.by[k].wo)}`; },
+          footer:i => { const a = M[i[0].dataIndex], p = prior.get(a.month); return [`Month: ${nf(so(a.t))} ${wayName} / ${nf(a.t.wo)} transactions = ${pct2(r1(so(a.t), a.t.wo))}`].concat(p && p.wo ? [`Same month last year ${pct2(r1(so(p), p.wo))}`] : []); }}}}}});
+  delete DRILL.cSCM; delete TFILT.cSCM;
+  const data = M.map(a => { const p = prior.get(a.month), o = {month:a.month, wo:a.t.wo, rule:a.t.rule, rulePct:r1(a.t.rule, a.t.wo), inc:scmIncl(a.t), incPct:r1(scmIncl(a.t), a.t.wo), ly:p && p.wo ? r1(so(p), p.wo) : null};
+    SCM_CLASSES.forEach(c => { o['p' + c] = r1(so(a.by[c]), a.t.wo); o['w' + c] = r1(so(a.by[c]), a.by[c].wo); o['n' + c] = a.by[c].wo; o['s' + c] = so(a.by[c]); }); return o; });
+  const YT = agg(mrows.filter(x => x.period.startsWith(yr))).by;
+  const mcols = [{k:'month', h:'Month', html:r => esc(MON3[+r.month.slice(5, 7) - 1] + ' ' + r.month.slice(0, 4)) + (r.month === cur ? ' <span class="muted">to date</span>' : '')},
+    {k:'wo', h:'Transactions', type:'num'}, {k:'rule', h:'Stockouts · restocked', type:'num'}, {k:'rulePct', h:'%', type:'pct2'}, {k:'inc', h:'Stockouts · incl. still out', type:'num'}, {k:'incPct', h:'% ', type:'pct2'}]
+    .concat(SCM_CLASSES.flatMap(c => [{k:'p' + c, h:`${c} · % of all`, type:'pct2', title:`${scmName(c)} ${wayName} ÷ all transactions that month`},
+                                       {k:'w' + c, h:`${c} · % of ${c === 'Other' ? 'own' : c}`, type:'pct2', title:`${scmName(c)} ${wayName} ÷ ${scmName(c)}'s own transactions`}]))
+    .concat([{k:'ly', h:'Same month last year', type:'pct2', title:`Total, ${wayName}`}])
+    .concat(SCM_CLASSES.flatMap(c => [{k:'s' + c, h:`${c} stockouts`, type:'num'}, {k:'n' + c, h:`${c} transactions`, type:'num'}]))
+    .map(c => c.type === 'pct2' ? {...c, csv:r => r[c.k] == null ? '' : (r[c.k] * 100).toFixed(2) + '%'} : c);
+  const yfoot = k => { const m = /^([pwsn])(.+)$/.exec(k); if (!m || !SCM_CLASSES.includes(m[2])) return null; const a = YT[m[2]];
+    return m[1] === 'p' ? pct2(r1(so(a), T.wo)) : m[1] === 'w' ? pct2(r1(so(a), a.wo)) : nf(m[1] === 's' ? so(a) : a.wo); };
+  table('tSCM', mcols, data, {sortKey:'month', sortDir:1, exportId:'xSCM', exportName:'stockouts_by_class_month_' + yr, hidden:SCM_CLASSES.flatMap(c => ['s' + c, 'n' + c]),
+    foot:(c, i) => i === 0 ? `${yr} total` : c.k === 'wo' ? nf(T.wo) : c.k === 'rule' ? nf(T.rule) : c.k === 'rulePct' ? pct2(r1(T.rule, T.wo)) : c.k === 'inc' ? nf(scmIncl(T)) : c.k === 'incPct' ? pct2(r1(scmIncl(T), T.wo)) : yfoot(c.k) || ''});
+}
 function renderStockouts(){
+  renderSOClass();
   $('soNotice').innerHTML = modNotice(['stockout_events', 'supplier_perf', 'sales_12m']);
   const ev = stockoutView();
   const byKey = new Map(); ev.forEach(e => { const k = kk(e.item, e.loc); const a = byKey.get(k) || []; a.push(e); byKey.set(k, a); });
@@ -6102,6 +6547,8 @@ document.querySelectorAll('#dhDim button').forEach(b => b.onclick = () => { S.dh
 $('dohTarget').onchange = e => { S.dohTarget = Math.max(1, +e.target.value || 90); lsSet('dohTarget', S.dohTarget); renderTab(); };
 document.querySelectorAll('#chDim button').forEach(b => b.onclick = () => { S.chDim = b.dataset.v; renderTab(); });
 document.querySelectorAll('#soMode button').forEach(b => b.onclick = () => { S.soMode = b.dataset.v; renderTab(); });
+document.querySelectorAll('#scmMeasure button').forEach(b => b.onclick = () => { S.scmMeasure = b.dataset.v; renderTab(); });
+document.querySelectorAll('#scmWay button').forEach(b => b.onclick = () => { S.scmWay = b.dataset.v; renderTab(); });
 $('bscShare').onclick = () => openBuyerShare();
 document.querySelectorAll('#brStkBy button').forEach(b => b.onclick = () => { S.brStkBy = b.dataset.v; renderTab(); });
 document.querySelectorAll('#brMixBy button').forEach(b => b.onclick = () => { S.brMixBy = b.dataset.v; renderTab(); });
@@ -6137,6 +6584,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if
   }
   if (EMBED) {
     document.body.classList.add('embed');
+    if (EMBED.snapshot) document.body.classList.add('snapshot');   // a saved copy in the hub: no buyer-level stockout views
     window.IH = {
       setSection: sec => applySection(sec),
       setTheme: t => { document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; syncThemeBtn(); if (P) render(); }};

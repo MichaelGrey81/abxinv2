@@ -125,7 +125,7 @@ SELECT
     CASE WHEN pv.last_purchase_date > '19900101' THEN CAST(pv.last_purchase_date AS DATE) END AS last_purchase_date,
     ISNULL(cl.class_description, '(no product group)') AS product_group,
     pv.stockable,
-    pv.inv_max,
+    CASE WHEN pv.replenishment_method = 'OP/OQ' THEN pv.inv_min + pv.inv_max ELSE pv.inv_max END AS inv_max,   -- target level: max, or OP + OQ
     fl.journal,
     pm.po_no,
     pm.requested_by_name,

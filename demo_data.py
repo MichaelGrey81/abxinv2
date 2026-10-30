@@ -560,6 +560,85 @@ def build(today: dt.date | None = None, seed: int = 11):
                             "open_po_received", "next_po_no", "next_po_date"], SE)
     mod("stockouts", ["item_id", "item_desc", "location_id", "stockout_events", "days_out", "last_stockout_date", "out_now"], SO)
 
+    # stockout_class_monthly: shipments and stockouts by month, branch and usage class, from January last year
+    SCM = []
+    # class: share of transactions, stockout rate, avg days out, items per branch, share still out with max 0
+    mix = {"A": (0.13, 0.006, 10, 30, 0.1), "B": (0.25, 0.012, 12, 100, 0.1), "C": (0.30, 0.027, 14, 240, 0.12), "D": (0.26, 0.08, 28, 560, 0.55),
+           "N##": (0.04, 0.07, 40, 120, 0.7), "XX": (0.01, 0.13, 70, 30, 0.8), "S###": (0.01, 0.03, 20, 20, 0.3)}
+    yearly = {}
+    y, m = today.year - 1, 1
+    while (y, m) <= (today.year, today.month):
+        part = today.day / 31 if (y, m) == (today.year, today.month) else 1
+        season = 1 + 0.08 * ((m - 6) / 6)
+        age = (today.year - y) * 12 + today.month - m          # months ago: recent stockouts are more often still out
+        for l in branches:
+            base = r.randint(900, 3200) * part
+            for cls, (share, rate, dmean, n_items, m0) in mix.items():
+                wo = int(base * share * r.uniform(0.85, 1.15))
+                if not wo:
+                    continue
+                outs = sum(1 for _ in range(wo) if r.random() < rate * season)
+                still = sum(1 for _ in range(outs) if r.random() < (0.5 if age == 0 else 0.25 if age == 1 else 0.06 / (1 + age / 4)))
+                still0 = sum(1 for _ in range(still) if r.random() < m0)
+                rule = outs - still
+                days_r = sum(max(1, int(r.expovariate(1 / dmean))) for _ in range(rule))
+                days = days_r + still * int(min(30 * age + 10, dmean * 3))
+                lines = int(wo * r.uniform(0.98, 1.04))
+                ship_items = min(n_items, int(wo / 3) + 1)
+                out_items = min(ship_items, int(outs * 0.8) + 1)
+                SCM.append([f"{y}-{m:02d}", l[0], cls, wo, rule, still, still0, outs, days, rule, days_r,
+                            sum(1 for _ in range(outs) if r.random() < 0.05), sum(1 for _ in range(outs) if r.random() < 0.07),
+                            lines, sum(1 for _ in range(lines) if r.random() < rate * 0.3), ship_items, out_items, None, None, None])
+                yy = yearly.setdefault((str(y), l[0], cls), [0, 0])
+                yy[0] = min(n_items, yy[0] + ship_items // 2 + 1); yy[1] = min(yy[0], yy[1] + out_items // 2 + 1)
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    for (yr_, loc, cls), (si, so_) in yearly.items():
+        SCM.append([yr_, loc, cls] + [0] * 12 + [si, so_, None, None, None])
+    for l in branches:
+        for cls, (_, rate, _, n_items, _) in mix.items():
+            zero = int(n_items * rate * r.uniform(0.6, 1.4))
+            SCM.append(["now", l[0], cls] + [0] * 14 + [n_items, zero, int(zero * r.uniform(0.05, 0.2))])
+    # stock_candidates: non-stock item-locations with repeat usage over the last 12 months
+    SC = []
+    first = (today.replace(day=1) - dt.timedelta(days=365)).replace(day=1)
+    for it in r.sample(items, min(420, len(items))):
+        loc = r.choice(branches)[0]
+        months = r.choices(range(3, 13), weights=[5, 5, 5, 4, 4, 3, 3, 2, 2, 1])[0]
+        lvl = r.uniform(2, 60)
+        used = set(r.sample(range(12), months)) | ({11} if r.random() < 0.7 else set())
+        u = [round(lvl * r.uniform(0.3, 1.8)) if m in used else 0 for m in range(12)]
+        lines = sum(1 for v in u if v) * r.randint(1, 6)
+        SC.append([loc, it["id"], it["desc"], r.choice(["NS", "NS", "", "DD"]), "Up To", it["sup"]["name"], it["cost"], r.choice([0, 0, 0, 2, 5])] + u +
+                  [first.strftime("%Y-%m"), lines, max(1, lines // 2), r.randint(1, 12), int(lines * r.choice([0, 0, 0.1, 0.4, 0.8])),
+                   round(sum(u) * it["cost"] * it["markup"], 2), iso(today - dt.timedelta(days=r.randint(1, 60))), r.choice([0, 0, 0, 1, 2, 4])])
+    mod("stock_candidates", ["location_id", "item_id", "item_desc", "purchase_class", "replenishment_method", "supplier_name", "unit_cost", "qty_on_hand"] +
+        [f"u{m:02d}" for m in range(1, 13)] + ["first_month", "lines", "orders", "customers", "lines_direct_special", "sales_12m", "last_order", "branches_stocking"], SC)
+
+    # usage_vs_max: stocked item-locations whose monthly usage beat the max in place that month
+    UV = []
+    for il in r.sample([x for x in IL if x.get("max")], min(300, len([x for x in IL if x.get("max")]))):
+        it, mx, mn = il["it"], il["max"], il["min"]
+        opoq = r.random() < 0.07
+        tgt = mn + mx if opoq else mx
+        lvl = tgt * r.uniform(0.7, 1.6)
+        u = [max(0, round(lvl * r.uniform(0.5, 1.5))) for _ in range(12)]
+        t = [tgt] * 12
+        if r.random() < 0.2:   # max raised part-way through the year
+            k = r.randint(4, 10); t = [round(tgt * 0.7)] * k + [tgt] * (12 - k)
+        over = sum(1 for a, b in zip(u, t) if b and a > b)
+        if over < 2:
+            continue
+        ch = iso(today - dt.timedelta(days=r.randint(5, 300))) if r.random() < 0.3 else None
+        UV.append([il["loc"], it["id"], it["desc"], it["abc"], "OP/OQ" if opoq else "Min/Max", mn, mx, it["cost"], il.get("oh", 0), it["sup"]["name"], it["sup"]["buyer"],
+                   first.strftime("%Y-%m")] + u + t + [over, ch, "Demo Buyer" if ch else None, round(tgt * 0.8) if ch else None, tgt if ch else None])
+    mod("usage_vs_max", ["location_id", "item_id", "item_desc", "purchase_class", "replenishment_method", "inv_min", "inv_max", "unit_cost", "qty_on_hand", "supplier_name",
+                         "supplier_buyer", "first_month"] + [f"u{m:02d}" for m in range(1, 13)] + [f"t{m:02d}" for m in range(1, 13)] +
+        ["months_over", "last_max_change", "last_max_by", "last_max_before", "last_max_after"], UV)
+
+    mod("stockout_class_monthly", ["period", "location_id", "usage_class", "wo_tx", "so_rule", "still_out", "still_out_max0", "outs", "days_out",
+                                   "outs_restocked", "days_out_restocked", "started_by_adjustment", "started_by_transfer_other", "order_lines",
+                                   "lines_while_out", "items_shipping", "items_out", "snap_items", "snap_zero", "snap_allocated"], SCM)
+
     # open POs, backorders, reorder now
     OP, BO, RN = [], [], []
     po_by = {}

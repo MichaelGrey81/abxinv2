@@ -18,7 +18,7 @@ SELECT
     il.purchase_class,
     il.replenishment_method,
     CAST(il.inv_min AS DECIMAL(19,4))              AS inv_min,
-    CAST(il.inv_max AS DECIMAL(19,4))              AS inv_max,
+    CAST(CASE WHEN il.replenishment_method = 'OP/OQ' THEN il.inv_min + il.inv_max ELSE il.inv_max END AS DECIMAL(19,4)) AS inv_max,   -- target level: max, or OP + OQ
     CAST(il.qty_on_hand AS DECIMAL(19,4))          AS qty_on_hand,
     CAST(il.qty_allocated AS DECIMAL(19,4))        AS qty_allocated,
     CAST(il.qty_backordered AS DECIMAL(19,4))      AS qty_backordered,
